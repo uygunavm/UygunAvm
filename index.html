@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -985,7 +984,7 @@
       });
       addHistory(icon, currentEmployee, action,
         now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' }));
-      showToast('✅', `"${action}" kaydedildi!`, 'success');
+      showToast('✅', "${action}" kaydedildi!, 'success');
     } catch (err) {
       showToast('❌', 'Bağlantı hatası!', 'error');
     }
@@ -1083,7 +1082,7 @@
         renderWorkers(data);
         const now = new Date();
         document.getElementById('refreshInfo').textContent =
-          `Son güncelleme: ${now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })} · 30 sn'de bir yenilenir`;
+          Son güncelleme: ${now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })} · 30 sn'de bir yenilenir;
       } catch(e) {
         document.getElementById('refreshInfo').textContent = '⚠️ Veri işlenemedi.';
       }
@@ -1103,47 +1102,17 @@
 
   function renderWorkers(rows) {
     const latest = {};
-    const normalizedRows = []; // normalize edilmiş tüm kayıtlar
-
     rows.forEach(row => {
       const [rawName, action, ts] = row;
+      // Boş satırları atla (— — gibi)
       if (!rawName || rawName === '—' || !action || action === '—') return;
+      // İsmi normalize et: trim + her kelimenin baş harfi büyük
       const name = rawName.trim().split(' ')
         .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
         .join(' ');
       const parsedTime = parseTS(ts);
-      normalizedRows.push({ name, action, time: parsedTime });
       if (!latest[name] || parsedTime > latest[name].time) {
         latest[name] = { action, ts, time: parsedTime };
-      }
-    });
-
-    // Her çalışan için mola aşım sayısını hesapla
-    // Mantık: "Molaya Çıktı" → "Moladan Döndü" veya "İşe Başladı" veya "Mesaisi Bitti" arasındaki süre > 15 dk ise aşım
-    const violations = {};
-    const byName = {};
-    normalizedRows.forEach(r => {
-      if (!byName[r.name]) byName[r.name] = [];
-      byName[r.name].push(r);
-    });
-
-    Object.entries(byName).forEach(([name, records]) => {
-      records.sort((a, b) => a.time - b.time);
-      violations[name] = 0;
-      let breakStart = null;
-      records.forEach(r => {
-        if (r.action === 'Molaya Çıktı') {
-          breakStart = r.time;
-        } else if (breakStart && (r.action === 'Moladan Döndü' || r.action === 'İşe Başladı' || r.action === 'Mesaisi Bitti')) {
-          const dur = (r.time - breakStart) / 60000;
-          if (dur > BREAK_LIMIT_MIN) violations[name]++;
-          breakStart = null;
-        }
-      });
-      // Hâlâ molada ve süre aştıysa (açık mola)
-      if (breakStart) {
-        const dur = (Date.now() - breakStart) / 60000;
-        if (dur > BREAK_LIMIT_MIN) violations[name]++;
       }
     });
 
@@ -1166,10 +1135,6 @@
       const { action, time } = data;
       const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
       const diffMin = Math.floor((Date.now() - time) / 60000);
-      const vCount = violations[name] || 0;
-      const violationTag = vCount > 0
-        ? `<span style="font-size:11px;color:var(--text-muted);margin-left:4px;">⚠️ ${vCount}x aşım</span>`
-        : '';
 
       let cardClass = 'worker-card';
       let statusText = '';
@@ -1180,8 +1145,8 @@
         const over = diffMin > BREAK_LIMIT_MIN;
         cardClass += over ? ' over-limit' : ' on-break';
         statusText = over
-          ? `🔴 Molada — <b>${diffMin} dk</b>`
-          : `🟡 Molada — ${diffMin} dk`;
+          ? 🔴 Molada — <b>${diffMin} dk</b>
+          : 🟡 Molada — ${diffMin} dk;
         timerText = diffMin + ' dk';
         if (over) alertBadge = '<span class="alert-badge">AŞILDI</span>';
         if (over) overLimit++; else onBreak++;
@@ -1204,12 +1169,10 @@
         <div class="worker-info">
           <div class="worker-name">${name}${alertBadge}</div>
           <div class="worker-status">${statusText}</div>
-          ${vCount > 0 ? `<div style="font-size:11px;color:var(--red);margin-top:3px;">⚠️ Bugün ${vCount} kez mola aşımı</div>` : ''}
         </div>
-        ${timerText ? `<div class="worker-timer">${timerText}</div>` : ''}
+        ${timerText ? <div class="worker-timer">${timerText}</div> : ''}
       `;
       list.appendChild(card);
-    });
     });
 
     document.getElementById('countWorking').textContent = working;
