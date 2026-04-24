@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mesai Takip</title>
+<title>Uygun Avm Taki</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -483,6 +483,264 @@
   }
   .btn-change-name:hover { border-color: var(--blue); color: var(--blue); }
 
+  /* PATRON BUTTON */
+  .btn-patron-entry {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    margin-top: 8px;
+  }
+  .btn-patron-entry:hover { border-color: var(--blue); color: var(--blue); background: rgba(77,166,255,0.05); }
+
+  /* PASSWORD MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+    transform: translateY(20px);
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-overlay.show .modal { transform: translateY(0); }
+
+  .modal h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .modal .name-input { margin-bottom: 12px; letter-spacing: 4px; font-size: 22px; }
+
+  .modal-btns { display: flex; gap: 10px; }
+
+  .btn-modal-cancel {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .btn-modal-cancel:hover { border-color: var(--border); color: var(--text); }
+
+  .btn-modal-ok {
+    flex: 2;
+    background: linear-gradient(135deg, var(--blue), var(--blue-dim));
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #001026;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 14px;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+  .btn-modal-ok:hover { filter: brightness(1.1); }
+
+  .shake { animation: shake 0.4s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  /* PATRON PANEL */
+  .patron-panel {
+    display: none;
+    width: 100%;
+  }
+
+  .patron-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .patron-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .btn-patron-exit {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-patron-exit:hover { border-color: var(--red); color: var(--red); }
+
+  .refresh-info {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  /* WORKER CARDS */
+  .worker-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.3s;
+  }
+
+  .worker-card.on-break { border-color: rgba(245,197,66,0.4); }
+  .worker-card.over-limit { border-color: rgba(255,90,90,0.5); background: rgba(255,90,90,0.04); }
+  .worker-card.working { border-color: rgba(34,212,122,0.3); }
+  .worker-card.off { border-color: var(--border); opacity: 0.6; }
+
+  .worker-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    background: var(--surface2);
+    color: var(--text-muted);
+  }
+
+  .worker-card.working .worker-avatar { background: rgba(34,212,122,0.15); color: var(--green); }
+  .worker-card.on-break .worker-avatar { background: rgba(245,197,66,0.15); color: var(--yellow); }
+  .worker-card.over-limit .worker-avatar { background: rgba(255,90,90,0.15); color: var(--red); }
+
+  .worker-info { flex: 1; min-width: 0; }
+
+  .worker-name {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .worker-status {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .worker-card.working .worker-status { color: var(--green); }
+  .worker-card.on-break .worker-status { color: var(--yellow); }
+  .worker-card.over-limit .worker-status { color: var(--red); }
+
+  .worker-timer {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+
+  .worker-card.on-break .worker-timer { color: var(--yellow); }
+  .worker-card.over-limit .worker-timer { color: var(--red); }
+
+  .alert-badge {
+    background: var(--red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 100px;
+    margin-left: 6px;
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .patron-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 40px 0;
+  }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .summary-box .s-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .summary-box .s-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .summary-box.green .s-num { color: var(--green); }
+  .summary-box.yellow .s-num { color: var(--yellow); }
+  .summary-box.red .s-num { color: var(--red); }
+
   @media (max-width: 360px) {
     .btn { min-height: 96px; padding: 18px 12px; }
     .btn .btn-icon { font-size: 24px; }
@@ -557,8 +815,52 @@
     </div>
   </div>
 
+  <!-- PATRON GİRİŞ BUTONU -->
+  <button class="btn-patron-entry" onclick="openPasswordModal()">
+    🔐 Patron Görünümü
+  </button>
+
   </div><!-- /mainApp -->
 
+  <!-- PATRON PANELİ -->
+  <div class="patron-panel" id="patronPanel">
+    <div class="patron-header">
+      <h2>👁️ Patron Paneli</h2>
+      <button class="btn-patron-exit" onclick="exitPatron()">← Çık</button>
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-box green">
+        <div class="s-num" id="countWorking">0</div>
+        <div class="s-label">Çalışıyor</div>
+      </div>
+      <div class="summary-box yellow">
+        <div class="s-num" id="countBreak">0</div>
+        <div class="s-label">Molada</div>
+      </div>
+      <div class="summary-box red">
+        <div class="s-num" id="countAlert">0</div>
+        <div class="s-label">Aşıldı</div>
+      </div>
+    </div>
+
+    <div class="refresh-info" id="refreshInfo">Yükleniyor...</div>
+    <div id="workerList"><div class="patron-empty">⏳ Veriler yükleniyor...</div></div>
+  </div>
+
+</div>
+
+<!-- ŞİFRE MODALI -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal">
+    <h3>🔐 Patron Girişi</h3>
+    <p>Devam etmek için şifreyi girin</p>
+    <input class="name-input" id="passwordInput" type="password" placeholder="••••••" maxlength="20" />
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closePasswordModal()">İptal</button>
+      <button class="btn-modal-ok" onclick="checkPassword()">Giriş →</button>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -568,96 +870,95 @@
 </div>
 
 <script>
+  // ============================================================
+  // ⚡ GOOGLE APPS SCRIPT URL'İNİZİ BURAYA YAPIŞTIRINIZ
+  // ============================================================
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbwbI_X05vboWCWePFF9KqjtQG5JAtv8LrIiVWI0RVwJtPoqyggUXZ91KZGzR9KtYk1oxA/exec';
+
+  // ============================================================
+  // 🔐 PATRON ŞİFRESİNİ BURADAN DEĞİŞTİREBİLİRSİNİZ
+  // ============================================================
+  const PATRON_PASSWORD = '5261';
+
+  // Mola uyarı limiti (dakika)
+  const BREAK_LIMIT_MIN = 15;
 
   let toastTimer = null;
   let currentEmployee = '';
+  let patronRefreshTimer = null;
+  let workerTimers = {};
 
-  // Live clock
+  // ── SAAT ──────────────────────────────────────────────────
   function updateClock() {
     const now = new Date();
-    document.getElementById('clock').textContent = now.toLocaleDateString('tr-TR', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    }) + ' — ' + now.toLocaleTimeString('tr-TR');
+    document.getElementById('clock').textContent =
+      now.toLocaleDateString('tr-TR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+      + ' — ' + now.toLocaleTimeString('tr-TR');
   }
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Init: isim kaydedilmiş mi kontrol et
+  // ── ÇALIŞAN İSMİ ─────────────────────────────────────────
   function init() {
     const saved = localStorage.getItem('employeeName');
     if (saved && saved.trim()) {
       currentEmployee = saved.trim();
       document.getElementById('employeeDisplay').textContent = currentEmployee;
-      document.getElementById('setupScreen').style.display = 'none';
-      document.getElementById('mainApp').style.display = 'block';
+      show('mainApp');
     } else {
-      document.getElementById('setupScreen').style.display = 'flex';
-      document.getElementById('mainApp').style.display = 'none';
+      show('setupScreen');
     }
   }
 
   function saveName() {
     const val = document.getElementById('nameInput').value.trim();
     if (!val) {
-      document.getElementById('nameInput').focus();
-      document.getElementById('nameInput').style.borderColor = 'var(--red)';
-      setTimeout(() => document.getElementById('nameInput').style.borderColor = '', 1500);
+      shake(document.getElementById('nameInput'));
       return;
     }
     localStorage.setItem('employeeName', val);
     currentEmployee = val;
     document.getElementById('employeeDisplay').textContent = currentEmployee;
-    document.getElementById('setupScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
+    show('mainApp');
   }
 
   function changeName() {
     document.getElementById('nameInput').value = currentEmployee;
-    document.getElementById('setupScreen').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'none';
+    show('setupScreen');
     setTimeout(() => document.getElementById('nameInput').focus(), 100);
   }
 
-  // Enter tuşuyla kaydet
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && document.getElementById('setupScreen').style.display !== 'none') {
-      saveName();
+    if (e.key === 'Enter') {
+      if (!isHidden('setupScreen')) saveName();
+      if (!isHidden('passwordModal') && document.getElementById('passwordModal').classList.contains('show')) checkPassword();
     }
   });
 
+  // ── ANA EYLEMLER ─────────────────────────────────────────
   async function sendAction(action, icon, dotColor) {
-    if (!currentEmployee) {
-      showToast('⚠️', 'Önce isminizi girin!', 'error');
-      return;
-    }
+    if (!currentEmployee) { showToast('⚠️', 'Önce isminizi girin!', 'error'); return; }
 
     const now = new Date();
     const timestamp = now.toLocaleString('tr-TR', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
     });
 
-    const dot = document.getElementById('statusDot');
-    dot.className = 'status-dot ' + dotColor;
-
+    document.getElementById('statusDot').className = 'status-dot ' + dotColor;
     showToast('', '', 'loading', true);
-
-    const payload = { employee: currentEmployee, action, timestamp };
 
     try {
       await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors',
+        method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ employee: currentEmployee, action, timestamp })
       });
-
-      addHistory(icon, currentEmployee, action, now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }));
+      addHistory(icon, currentEmployee, action,
+        now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' }));
       showToast('✅', `"${action}" kaydedildi!`, 'success');
     } catch (err) {
-      showToast('❌', 'Bağlantı hatası! Tekrar deneyin.', 'error');
-      console.error(err);
+      showToast('❌', 'Bağlantı hatası!', 'error');
     }
   }
 
@@ -665,7 +966,6 @@
     const list = document.getElementById('historyList');
     const empty = list.querySelector('.empty-state');
     if (empty) empty.remove();
-
     const item = document.createElement('div');
     item.className = 'history-item';
     item.innerHTML = `
@@ -674,29 +974,193 @@
         <div class="history-name">${name}</div>
         <div class="history-action">${action}</div>
       </div>
-      <div class="history-time">${time}</div>
-    `;
+      <div class="history-time">${time}</div>`;
     list.insertBefore(item, list.firstChild);
     while (list.children.length > 10) list.removeChild(list.lastChild);
+  }
+
+  // ── PATRON ŞİFRESİ ───────────────────────────────────────
+  function openPasswordModal() {
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('passwordModal').classList.add('show');
+    setTimeout(() => document.getElementById('passwordInput').focus(), 200);
+  }
+
+  function closePasswordModal() {
+    document.getElementById('passwordModal').classList.remove('show');
+  }
+
+  function checkPassword() {
+    const val = document.getElementById('passwordInput').value;
+    if (val === PATRON_PASSWORD) {
+      closePasswordModal();
+      openPatronPanel();
+    } else {
+      shake(document.getElementById('passwordInput'));
+      document.getElementById('passwordInput').value = '';
+      showToast('❌', 'Hatalı şifre!', 'error');
+    }
+  }
+
+  // ── PATRON PANELİ ────────────────────────────────────────
+  function openPatronPanel() {
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('patronPanel').style.display = 'block';
+    loadPatronData();
+    // Her 30 saniyede otomatik yenile
+    patronRefreshTimer = setInterval(loadPatronData, 30000);
+  }
+
+  function exitPatron() {
+    clearInterval(patronRefreshTimer);
+    document.getElementById('patronPanel').style.display = 'none';
+    init(); // tekrar isim kontrolü yap
+  }
+
+  async function loadPatronData() {
+    document.getElementById('refreshInfo').textContent = 'Veriler güncelleniyor...';
+    try {
+      // GAS'tan GET ile veri çek
+      const res = await fetch(GAS_URL + '?action=getAll', { method: 'GET', mode: 'cors' });
+      const rows = await res.json();
+      renderWorkers(rows);
+      const now = new Date();
+      document.getElementById('refreshInfo').textContent =
+        `Son güncelleme: ${now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })} · 30 sn'de bir yenilenir`;
+    } catch (err) {
+      document.getElementById('refreshInfo').textContent = '⚠️ Veri alınamadı. Sheets bağlantısını kontrol edin.';
+    }
+  }
+
+  function renderWorkers(rows) {
+    // Her çalışanın son kaydını bul
+    const latest = {};
+    rows.forEach(row => {
+      // row: [isim, işlem, tarih_saat]
+      const [name, action, ts] = row;
+      if (!name) return;
+      if (!latest[name] || new Date(parseTS(ts)) > new Date(parseTS(latest[name].ts))) {
+        latest[name] = { action, ts };
+      }
+    });
+
+    const list = document.getElementById('workerList');
+    list.innerHTML = '';
+
+    if (Object.keys(latest).length === 0) {
+      list.innerHTML = '<div class="patron-empty">📭 Henüz kayıt yok</div>';
+      return;
+    }
+
+    let working = 0, onBreak = 0, overLimit = 0;
+
+    // Önce molada olanları, sonra çalışanları, sonra mesaisi bitenleri sırala
+    const sorted = Object.entries(latest).sort((a, b) => {
+      const order = { 'Molaya Çıktı': 0, 'İşe Başladı': 1, 'Moladan Döndü': 1, 'Mesaisi Bitti': 2 };
+      return (order[a[1].action] ?? 1) - (order[b[1].action] ?? 1);
+    });
+
+    sorted.forEach(([name, data]) => {
+      const { action, ts } = data;
+      const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      const actionTime = new Date(parseTS(ts));
+      const nowMs = Date.now();
+      const diffMin = Math.floor((nowMs - actionTime.getTime()) / 60000);
+
+      let cardClass = 'worker-card';
+      let statusText = '';
+      let timerText = '';
+      let alertBadge = '';
+      let avatarText = initials;
+
+      if (action === 'Molaya Çıktı') {
+        const over = diffMin > BREAK_LIMIT_MIN;
+        cardClass += over ? ' over-limit' : ' on-break';
+        statusText = over
+          ? `🔴 Molada — <b>${diffMin} dk</b>`
+          : `🟡 Molada — ${diffMin} dk`;
+        timerText = diffMin + ' dk';
+        if (over) alertBadge = '<span class="alert-badge">AŞILDI</span>';
+        if (over) overLimit++; else onBreak++;
+      } else if (action === 'İşe Başladı' || action === 'Moladan Döndü') {
+        cardClass += ' working';
+        statusText = '🟢 Çalışıyor';
+        timerText = '';
+        working++;
+      } else if (action === 'Mesaisi Bitti') {
+        cardClass += ' off';
+        statusText = '⚫ Mesai bitti';
+        timerText = '';
+      } else {
+        cardClass += ' off';
+        statusText = action;
+      }
+
+      const card = document.createElement('div');
+      card.className = cardClass;
+      card.innerHTML = `
+        <div class="worker-avatar">${avatarText}</div>
+        <div class="worker-info">
+          <div class="worker-name">${name}${alertBadge}</div>
+          <div class="worker-status">${statusText}</div>
+        </div>
+        ${timerText ? `<div class="worker-timer">${timerText}</div>` : ''}
+      `;
+      list.appendChild(card);
+    });
+
+    document.getElementById('countWorking').textContent = working;
+    document.getElementById('countBreak').textContent = onBreak;
+    document.getElementById('countAlert').textContent = overLimit;
+  }
+
+  // "24.04.2026 09:00:00" → ISO formatına çevir
+  function parseTS(ts) {
+    if (!ts) return new Date(0);
+    // format: GG.AA.YYYY SS:DD:SS
+    const [datePart, timePart] = ts.split(' ');
+    if (!datePart) return new Date(0);
+    const [d, m, y] = datePart.split('.');
+    return `${y}-${m}-${d}T${timePart || '00:00:00'}`;
+  }
+
+  // ── YARDIMCI ─────────────────────────────────────────────
+  function show(id) {
+    ['setupScreen','mainApp','patronPanel'].forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.style.display = 'none';
+    });
+    const target = document.getElementById(id);
+    if (target) target.style.display = id === 'setupScreen' ? 'flex' : 'block';
+  }
+
+  function isHidden(id) {
+    const el = document.getElementById(id);
+    return !el || el.style.display === 'none' || el.style.display === '';
+  }
+
+  function shake(el) {
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+    el.style.borderColor = 'var(--red)';
+    setTimeout(() => el.style.borderColor = '', 1500);
   }
 
   function showToast(icon, msg, type, isLoading = false) {
     clearTimeout(toastTimer);
     const toast = document.getElementById('toast');
-    const toastIcon = document.getElementById('toastIcon');
-    const toastMsg = document.getElementById('toastMsg');
     toast.className = 'toast ' + type;
     if (isLoading) {
-      toastIcon.innerHTML = '<div class="spinner"></div>';
-      toastMsg.textContent = 'Gönderiliyor...';
+      document.getElementById('toastIcon').innerHTML = '<div class="spinner"></div>';
+      document.getElementById('toastMsg').textContent = 'Gönderiliyor...';
     } else {
-      toastIcon.textContent = icon;
-      toastMsg.textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      document.getElementById('toastMsg').textContent = msg;
     }
     toast.classList.add('show');
-    if (!isLoading) {
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
-    }
+    if (!isLoading) toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
   init();
