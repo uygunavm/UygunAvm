@@ -902,9 +902,40 @@
     if (saved && saved.trim()) {
       currentEmployee = saved.trim();
       document.getElementById('employeeDisplay').textContent = currentEmployee;
+      loadHistory();
       show('mainApp');
     } else {
       show('setupScreen');
+    }
+  }
+
+  // Geçmişi localStorage'dan yükle
+  function loadHistory() {
+    const saved = localStorage.getItem('actionHistory');
+    if (!saved) return;
+    const items = JSON.parse(saved);
+    const list = document.getElementById('historyList');
+    const empty = list.querySelector('.empty-state');
+    if (empty && items.length > 0) empty.remove();
+    items.forEach(({ icon, name, action, time }) => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `
+        <span class="history-icon">${icon}</span>
+        <div class="history-info">
+          <div class="history-name">${name}</div>
+          <div class="history-action">${action}</div>
+        </div>
+        <div class="history-time">${time}</div>`;
+      list.appendChild(item);
+    });
+
+    // Son işleme göre status dot'u güncelle
+    if (items.length > 0) {
+      const last = items[0];
+      const dotMap = { 'İşe Başladı': 'green', 'Molaya Çıktı': 'yellow', 'Moladan Döndü': 'green', 'Mesaisi Bitti': 'red' };
+      const dot = document.getElementById('statusDot');
+      if (dotMap[last.action]) dot.className = 'status-dot ' + dotMap[last.action];
     }
   }
 
@@ -975,6 +1006,13 @@
       <div class="history-time">${time}</div>`;
     list.insertBefore(item, list.firstChild);
     while (list.children.length > 10) list.removeChild(list.lastChild);
+
+    // localStorage'a kaydet
+    const saved = localStorage.getItem('actionHistory');
+    const history = saved ? JSON.parse(saved) : [];
+    history.unshift({ icon, name, action, time });
+    if (history.length > 10) history.pop();
+    localStorage.setItem('actionHistory', JSON.stringify(history));
   }
 
   // ── PATRON ŞİFRESİ ───────────────────────────────────────
