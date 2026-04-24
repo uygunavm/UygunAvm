@@ -871,7 +871,7 @@
   // ============================================================
   // ⚡ GOOGLE APPS SCRIPT URL'İNİZİ BURAYA YAPIŞTIRINIZ
   // ============================================================
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxBlEK8SUnqIiWonZURXOK5qXbK-SkGmshLZl_b4fzr6GSICLD1oMRQkTauDjiCwP87Sg/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycby5rPwn2jghxcbrDj99nDkI7_QEJq7M7qZNGKLF2SaxAHvyZWhHs08IDa8HC_SUaynxWg/exec';
 
   // ============================================================
   // 🔐 PATRON ŞİFRESİNİ BURADAN DEĞİŞTİREBİLİRSİNİZ
@@ -1064,14 +1064,18 @@
   }
 
   function renderWorkers(rows) {
-    // Her çalışanın son kaydını bul
     const latest = {};
     rows.forEach(row => {
-      // row: [isim, işlem, tarih_saat]
-      const [name, action, ts] = row;
-      if (!name) return;
-      if (!latest[name] || new Date(parseTS(ts)) > new Date(parseTS(latest[name].ts))) {
-        latest[name] = { action, ts };
+      const [rawName, action, ts] = row;
+      // Boş satırları atla (— — gibi)
+      if (!rawName || rawName === '—' || !action || action === '—') return;
+      // İsmi normalize et: trim + her kelimenin baş harfi büyük
+      const name = rawName.trim().split(' ')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+      const parsedTime = parseTS(ts);
+      if (!latest[name] || parsedTime > latest[name].time) {
+        latest[name] = { action, ts, time: parsedTime };
       }
     });
 
@@ -1085,24 +1089,20 @@
 
     let working = 0, onBreak = 0, overLimit = 0;
 
-    // Önce molada olanları, sonra çalışanları, sonra mesaisi bitenleri sırala
     const sorted = Object.entries(latest).sort((a, b) => {
       const order = { 'Molaya Çıktı': 0, 'İşe Başladı': 1, 'Moladan Döndü': 1, 'Mesaisi Bitti': 2 };
       return (order[a[1].action] ?? 1) - (order[b[1].action] ?? 1);
     });
 
     sorted.forEach(([name, data]) => {
-      const { action, ts } = data;
+      const { action, time } = data;
       const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-      const actionTime = new Date(parseTS(ts));
-      const nowMs = Date.now();
-      const diffMin = Math.floor((nowMs - actionTime.getTime()) / 60000);
+      const diffMin = Math.floor((Date.now() - time) / 60000);
 
       let cardClass = 'worker-card';
       let statusText = '';
       let timerText = '';
       let alertBadge = '';
-      let avatarText = initials;
 
       if (action === 'Molaya Çıktı') {
         const over = diffMin > BREAK_LIMIT_MIN;
@@ -1116,12 +1116,10 @@
       } else if (action === 'İşe Başladı' || action === 'Moladan Döndü') {
         cardClass += ' working';
         statusText = '🟢 Çalışıyor';
-        timerText = '';
         working++;
       } else if (action === 'Mesaisi Bitti') {
         cardClass += ' off';
         statusText = '⚫ Mesai bitti';
-        timerText = '';
       } else {
         cardClass += ' off';
         statusText = action;
@@ -1130,7 +1128,7 @@
       const card = document.createElement('div');
       card.className = cardClass;
       card.innerHTML = `
-        <div class="worker-avatar">${avatarText}</div>
+        <div class="worker-avatar">${initials}</div>
         <div class="worker-info">
           <div class="worker-name">${name}${alertBadge}</div>
           <div class="worker-status">${statusText}</div>
@@ -1145,14 +1143,31 @@
     document.getElementById('countAlert').textContent = overLimit;
   }
 
-  // "24.04.2026 09:00:00" → ISO formatına çevir
+  // Tarih parse — Sheets'ten gelen tüm formatları destekler
   function parseTS(ts) {
     if (!ts) return new Date(0);
-    // format: GG.AA.YYYY SS:DD:SS
-    const [datePart, timePart] = ts.split(' ');
-    if (!datePart) return new Date(0);
-    const [d, m, y] = datePart.split('.');
-    return `${y}-${m}-${d}T${timePart || '00:00:00'}`;
+
+    // Sheets bazen Date objesi döndürür
+    if (ts instanceof Date) return ts;
+
+    ts = String(ts).trim();
+    if (!ts || ts === '—') return new Date(0);
+
+    // Format 1: "24.04.2026 21:09:07"
+    const m1 = ts.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/);
+    if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1], +m1[4], +m1[5], +m1[6]);
+
+    // Format 2: "2026-04-24T21:09:07"
+    const m2 = ts.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+    if (m2) return new Date(+m2[1], +m2[2]-1, +m2[3], +m2[4], +m2[5], +m2[6]);
+
+    // Format 3: "24.04.2026 21:09" (saniyesiz)
+    const m3 = ts.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})$/);
+    if (m3) return new Date(+m3[3], +m3[2]-1, +m3[1], +m3[4], +m3[5], 0);
+
+    // Fallback
+    const d = new Date(ts);
+    return isNaN(d) ? new Date(0) : d;
   }
 
   // ── YARDIMCI ─────────────────────────────────────────────
