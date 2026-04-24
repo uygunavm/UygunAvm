@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Uygun Avm Taki</title>
+<title>Uygun AVM Takip</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -755,7 +755,7 @@
   <!-- HEADER -->
   <div class="header">
     <div class="badge">Canlı Sistem</div>
-    <h1>Mesai<br><span>Takip</span></h1>
+    <h1>Uygun AVM<br><span>Takip</span></h1>
     <div class="clock" id="clock">—</div>
   </div>
 
@@ -1021,16 +1021,48 @@
   async function loadPatronData() {
     document.getElementById('refreshInfo').textContent = 'Veriler güncelleniyor...';
     try {
-      // GAS'tan GET ile veri çek
-      const res = await fetch(GAS_URL + '?action=getAll', { method: 'GET', mode: 'cors' });
-      const rows = await res.json();
-      renderWorkers(rows);
-      const now = new Date();
-      document.getElementById('refreshInfo').textContent =
-        `Son güncelleme: ${now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })} · 30 sn'de bir yenilenir`;
+      // GAS CORS kısıtlaması nedeniyle no-cors POST ile veri çekiyoruz
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'getAll' })
+      });
+      // no-cors'ta response okunamaz, alternatif: jsonp benzeri yaklaşım
+      // Bunun yerine script tag trick kullanıyoruz
+      loadViaScript();
     } catch (err) {
-      document.getElementById('refreshInfo').textContent = '⚠️ Veri alınamadı. Sheets bağlantısını kontrol edin.';
+      document.getElementById('refreshInfo').textContent = '⚠️ Veri alınamadı.';
     }
+  }
+
+  function loadViaScript() {
+    // GAS'tan JSONP benzeri yaklaşım: URL'e callback parametresi ekle
+    const callbackName = 'gasCallback_' + Date.now();
+    const script = document.createElement('script');
+
+    window[callbackName] = function(data) {
+      document.getElementById('refreshInfo').textContent = '';
+      try {
+        renderWorkers(data);
+        const now = new Date();
+        document.getElementById('refreshInfo').textContent =
+          `Son güncelleme: ${now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })} · 30 sn'de bir yenilenir`;
+      } catch(e) {
+        document.getElementById('refreshInfo').textContent = '⚠️ Veri işlenemedi.';
+      }
+      delete window[callbackName];
+      script.remove();
+    };
+
+    script.onerror = function() {
+      document.getElementById('refreshInfo').textContent = '⚠️ Veri alınamadı. GAS URL\'ini ve yayın ayarlarını kontrol edin.';
+      delete window[callbackName];
+      script.remove();
+    };
+
+    script.src = GAS_URL + '?callback=' + callbackName;
+    document.head.appendChild(script);
   }
 
   function renderWorkers(rows) {
