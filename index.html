@@ -2,751 +2,11 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Uygun AVM Takip</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0f0f13;
-    --surface: #18181f;
-    --surface2: #21212b;
-    --border: #2e2e3a;
-    --text: #f0f0f5;
-    --text-muted: #7a7a90;
-    --green: #22d47a;
-    --green-dim: #16a358;
-    --yellow: #f5c542;
-    --yellow-dim: #c49b20;
-    --blue: #4da6ff;
-    --blue-dim: #2a7fd4;
-    --red: #ff5a5a;
-    --red-dim: #cc3535;
-    --radius: 16px;
-    --radius-sm: 10px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px 16px 40px;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  /* Background glow */
-  body::before {
-    content: '';
-    position: fixed;
-    top: -120px; left: 50%;
-    transform: translateX(-50%);
-    width: 600px; height: 400px;
-    background: radial-gradient(ellipse, rgba(77,166,255,0.08) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .container {
-    width: 100%;
-    max-width: 440px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* HEADER */
-  .header {
-    text-align: center;
-    margin-bottom: 32px;
-    padding-top: 8px;
-  }
-
-  .header .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(77,166,255,0.12);
-    border: 1px solid rgba(77,166,255,0.25);
-    color: var(--blue);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 5px 12px;
-    border-radius: 100px;
-    margin-bottom: 14px;
-  }
-
-  .header .badge::before {
-    content: '';
-    width: 6px; height: 6px;
-    background: var(--blue);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
-
-  .header h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    line-height: 1.1;
-    color: var(--text);
-  }
-
-  .header h1 span {
-    color: var(--blue);
-  }
-
-  .clock {
-    margin-top: 10px;
-    font-size: 13px;
-    color: var(--text-muted);
-    font-weight: 300;
-    letter-spacing: 0.5px;
-  }
-
-  /* CARD */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 16px;
-  }
-
-  .card-label {
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    font-weight: 500;
-    margin-bottom: 10px;
-  }
-
-  /* DROPDOWN */
-  .select-wrapper {
-    position: relative;
-  }
-
-  .select-wrapper::after {
-    content: '▾';
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    pointer-events: none;
-    font-size: 14px;
-  }
-
-  select {
-    width: 100%;
-    appearance: none;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    padding: 16px 44px 16px 16px;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  select:focus {
-    border-color: var(--blue);
-  }
-
-  select option {
-    background: var(--surface2);
-  }
-
-  /* CURRENT STATUS */
-  .status-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 16px;
-    margin-top: 14px;
-  }
-
-  .status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--text-muted);
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-
-  .status-dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
-  .status-dot.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
-  .status-dot.red { background: var(--red); box-shadow: 0 0 8px var(--red); }
-
-  .status-text {
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
-  .status-text strong {
-    color: var(--text);
-    font-weight: 500;
-  }
-
-  /* SETUP SCREEN */
-  .setup-screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-    text-align: center;
-    gap: 20px;
-  }
-
-  .setup-screen .setup-icon {
-    font-size: 56px;
-    margin-bottom: 4px;
-  }
-
-  .setup-screen h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-  }
-
-  .setup-screen p {
-    font-size: 14px;
-    color: var(--text-muted);
-    max-width: 260px;
-    line-height: 1.5;
-  }
-
-  .name-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 18px;
-    font-weight: 500;
-    padding: 18px 16px;
-    outline: none;
-    text-align: center;
-    transition: border-color 0.2s;
-  }
-
-  .name-input::placeholder { color: var(--text-muted); }
-  .name-input:focus { border-color: var(--blue); }
-
-  .btn-save-name {
-    width: 100%;
-    background: linear-gradient(135deg, var(--blue), var(--blue-dim));
-    color: #001026;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    padding: 18px;
-    cursor: pointer;
-    transition: filter 0.15s, transform 0.12s;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .btn-save-name:active { transform: scale(0.97); filter: brightness(0.9); }
-  .btn-save-name:hover { filter: brightness(1.08); }
-
-  /* BUTTONS GRID */
-  .buttons-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .btn {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 22px 16px;
-    border: none;
-    border-radius: var(--radius);
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
-    overflow: hidden;
-    min-height: 110px;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .btn .btn-icon {
-    font-size: 28px;
-    line-height: 1;
-  }
-
-  .btn .btn-label {
-    font-size: 13px;
-    letter-spacing: 0.2px;
-    line-height: 1.2;
-    text-align: center;
-  }
-
-  /* Ripple */
-  .btn::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: white;
-    opacity: 0;
-    border-radius: inherit;
-    transition: opacity 0.15s;
-  }
-
-  .btn:active::after { opacity: 0.08; }
-
-  .btn:active {
-    transform: scale(0.95);
-    filter: brightness(0.9);
-  }
-
-  .btn:hover { filter: brightness(1.08); }
-
-  /* Button colors */
-  .btn-start {
-    background: linear-gradient(135deg, var(--green), var(--green-dim));
-    color: #001a0d;
-    box-shadow: 0 4px 24px rgba(34,212,122,0.25);
-  }
-
-  .btn-break-start {
-    background: linear-gradient(135deg, var(--yellow), var(--yellow-dim));
-    color: #1a1200;
-    box-shadow: 0 4px 24px rgba(245,197,66,0.25);
-  }
-
-  .btn-break-end {
-    background: linear-gradient(135deg, var(--blue), var(--blue-dim));
-    color: #001026;
-    box-shadow: 0 4px 24px rgba(77,166,255,0.25);
-  }
-
-  .btn-end {
-    background: linear-gradient(135deg, var(--red), var(--red-dim));
-    color: #1a0000;
-    box-shadow: 0 4px 24px rgba(255,90,90,0.25);
-  }
-
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 32px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s;
-    opacity: 0;
-    z-index: 999;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  }
-
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
-
-  .toast.success { border-color: rgba(34,212,122,0.4); }
-  .toast.error { border-color: rgba(255,90,90,0.4); }
-  .toast.loading { border-color: rgba(77,166,255,0.4); }
-
-  .toast-icon { font-size: 18px; }
-
-  /* HISTORY */
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 280px;
-    overflow-y: auto;
-  }
-
-  .history-list::-webkit-scrollbar { width: 4px; }
-  .history-list::-webkit-scrollbar-track { background: transparent; }
-  .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-  .history-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--surface2);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    animation: slideIn 0.3s ease;
-  }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .history-icon { font-size: 16px; }
-
-  .history-info { flex: 1; min-width: 0; }
-
-  .history-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .history-action {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 1px;
-  }
-
-  .history-time {
-    font-size: 11px;
-    color: var(--text-muted);
-    flex-shrink: 0;
-    font-weight: 300;
-  }
-
-  .empty-state {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 13px;
-    padding: 20px 0;
-  }
-
-  /* Divider */
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 6px 0 16px;
-  }
-
-  /* Spinner */
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid rgba(77,166,255,0.3);
-    border-top-color: var(--blue);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .btn-change-name {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    color: var(--text-muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    padding: 6px 14px;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s;
-    margin-top: 4px;
-  }
-  .btn-change-name:hover { border-color: var(--blue); color: var(--blue); }
-
-  /* PATRON BUTTON */
-  .btn-patron-entry {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    padding: 14px;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-    margin-top: 8px;
-  }
-  .btn-patron-entry:hover { border-color: var(--blue); color: var(--blue); background: rgba(77,166,255,0.05); }
-
-  /* PASSWORD MODAL */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 24px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  .modal-overlay.show { opacity: 1; pointer-events: all; }
-
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px 24px;
-    width: 100%;
-    max-width: 340px;
-    text-align: center;
-    transform: translateY(20px);
-    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  .modal-overlay.show .modal { transform: translateY(0); }
-
-  .modal h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 6px;
-  }
-  .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
-
-  .modal .name-input { margin-bottom: 12px; letter-spacing: 4px; font-size: 22px; }
-
-  .modal-btns { display: flex; gap: 10px; }
-
-  .btn-modal-cancel {
-    flex: 1;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    padding: 14px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-  .btn-modal-cancel:hover { border-color: var(--border); color: var(--text); }
-
-  .btn-modal-ok {
-    flex: 2;
-    background: linear-gradient(135deg, var(--blue), var(--blue-dim));
-    border: none;
-    border-radius: var(--radius-sm);
-    color: #001026;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 14px;
-    cursor: pointer;
-    transition: filter 0.15s;
-  }
-  .btn-modal-ok:hover { filter: brightness(1.1); }
-
-  .shake { animation: shake 0.4s ease; }
-  @keyframes shake {
-    0%,100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); }
-    60% { transform: translateX(-6px); }
-    80% { transform: translateX(6px); }
-  }
-
-  /* PATRON PANEL */
-  .patron-panel {
-    display: none;
-    width: 100%;
-  }
-
-  .patron-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-
-  .patron-header h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-  }
-
-  .btn-patron-exit {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    color: var(--text-muted);
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    padding: 6px 14px;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s;
-  }
-  .btn-patron-exit:hover { border-color: var(--red); color: var(--red); }
-
-  .refresh-info {
-    font-size: 11px;
-    color: var(--text-muted);
-    text-align: center;
-    margin-bottom: 12px;
-  }
-
-  /* WORKER CARDS */
-  .worker-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    transition: border-color 0.3s;
-  }
-
-  .worker-card.on-break { border-color: rgba(245,197,66,0.4); }
-  .worker-card.over-limit { border-color: rgba(255,90,90,0.5); background: rgba(255,90,90,0.04); }
-  .worker-card.working { border-color: rgba(34,212,122,0.3); }
-  .worker-card.off { border-color: var(--border); opacity: 0.6; }
-
-  .worker-avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    flex-shrink: 0;
-    background: var(--surface2);
-    color: var(--text-muted);
-  }
-
-  .worker-card.working .worker-avatar { background: rgba(34,212,122,0.15); color: var(--green); }
-  .worker-card.on-break .worker-avatar { background: rgba(245,197,66,0.15); color: var(--yellow); }
-  .worker-card.over-limit .worker-avatar { background: rgba(255,90,90,0.15); color: var(--red); }
-
-  .worker-info { flex: 1; min-width: 0; }
-
-  .worker-name {
-    font-size: 14px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .worker-status {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-
-  .worker-card.working .worker-status { color: var(--green); }
-  .worker-card.on-break .worker-status { color: var(--yellow); }
-  .worker-card.over-limit .worker-status { color: var(--red); }
-
-  .worker-timer {
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    flex-shrink: 0;
-    color: var(--text-muted);
-  }
-
-  .worker-card.on-break .worker-timer { color: var(--yellow); }
-  .worker-card.over-limit .worker-timer { color: var(--red); }
-
-  .alert-badge {
-    background: var(--red);
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 100px;
-    margin-left: 6px;
-    animation: blink 1s infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-  .patron-empty {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 13px;
-    padding: 40px 0;
-  }
-
-  .summary-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .summary-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 14px 10px;
-    text-align: center;
-  }
-
-  .summary-box .s-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-  }
-
-  .summary-box .s-label {
-    font-size: 10px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 2px;
-  }
-
-  .summary-box.green .s-num { color: var(--green); }
-  .summary-box.yellow .s-num { color: var(--yellow); }
-  .summary-box.red .s-num { color: var(--red); }
-
-  @media (max-width: 360px) {
-    .btn { min-height: 96px; padding: 18px 12px; }
-    .btn .btn-icon { font-size: 24px; }
-    .btn .btn-label { font-size: 12px; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uygun AVM Takip</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -770,6 +30,7 @@
 
   <!-- MAIN APP (isim kaydedildikten sonra görünür) -->
   <div id="mainApp" style="display:none; width:100%;">
+
     <!-- ÇALIŞAN KARTI -->
     <div class="card">
       <div class="card-label">Aktif Çalışan</div>
@@ -777,46 +38,45 @@
         <div class="status-dot green" id="statusDot"></div>
         <div class="status-text"><strong id="employeeDisplay">—</strong></div>
       </div>
-
     </div>
 
-  <!-- ACTION BUTTONS -->
-  <div class="card">
-    <div class="card-label">İşlem Seçimi</div>
-    <div class="divider"></div>
-    <div class="buttons-grid">
-      <button class="btn btn-start" onclick="sendAction('İşe Başladı', '🟢', 'green')">
-        <span class="btn-icon">🟢</span>
-        <span class="btn-label">İşe Başla</span>
-      </button>
-      <button class="btn btn-break-start" onclick="sendAction('Molaya Çıktı', '🟡', 'yellow')">
-        <span class="btn-icon">🟡</span>
-        <span class="btn-label">Molaya Çık</span>
-      </button>
-      <button class="btn btn-break-end" onclick="sendAction('Moladan Döndü', '🔵', 'blue')">
-        <span class="btn-icon">🔵</span>
-        <span class="btn-label">Moladan Dön</span>
-      </button>
-      <button class="btn btn-end" onclick="sendAction('Mesaisi Bitti', '🔴', 'red')">
-        <span class="btn-icon">🔴</span>
-        <span class="btn-label">Mesai Bitir</span>
-      </button>
+    <!-- AKSİYON BUTONLARI -->
+    <div class="card">
+      <div class="card-label">İşlem Seçimi</div>
+      <div class="divider"></div>
+      <div class="buttons-grid">
+        <button class="btn btn-start" onclick="sendAction('İşe Başladı', '🟢', 'green')">
+          <span class="btn-icon">🟢</span>
+          <span class="btn-label">İşe Başla</span>
+        </button>
+        <button class="btn btn-break-start" onclick="sendAction('Molaya Çıktı', '🟡', 'yellow')">
+          <span class="btn-icon">🟡</span>
+          <span class="btn-label">Molaya Çık</span>
+        </button>
+        <button class="btn btn-break-end" onclick="sendAction('Moladan Döndü', '🔵', 'blue')">
+          <span class="btn-icon">🔵</span>
+          <span class="btn-label">Moladan Dön</span>
+        </button>
+        <button class="btn btn-end" onclick="sendAction('Mesaisi Bitti', '🔴', 'red')">
+          <span class="btn-icon">🔴</span>
+          <span class="btn-label">Mesai Bitir</span>
+        </button>
+      </div>
     </div>
-  </div>
 
-  <!-- HISTORY -->
-  <div class="card">
-    <div class="card-label">Son İşlemler</div>
-    <div class="divider"></div>
-    <div class="history-list" id="historyList">
-      <div class="empty-state">Henüz kayıt yok</div>
+    <!-- SON İŞLEMLER -->
+    <div class="card">
+      <div class="card-label">Son İşlemler</div>
+      <div class="divider"></div>
+      <div class="history-list" id="historyList">
+        <div class="empty-state">Henüz kayıt yok</div>
+      </div>
     </div>
-  </div>
 
-  <!-- PATRON GİRİŞ BUTONU -->
-  <button class="btn-patron-entry" onclick="openPasswordModal()">
-    🔐 Patron Görünümü
-  </button>
+    <!-- PATRON GİRİŞ BUTONU -->
+    <button class="btn-patron-entry" onclick="openPasswordModal()">
+      🔐 Patron Görünümü
+    </button>
 
   </div><!-- /mainApp -->
 
@@ -846,7 +106,7 @@
     <div id="workerList"><div class="patron-empty">⏳ Veriler yükleniyor...</div></div>
   </div>
 
-</div>
+</div><!-- /container -->
 
 <!-- ŞİFRE MODALI -->
 <div class="modal-overlay" id="passwordModal">
@@ -861,392 +121,55 @@
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- ÇALIŞAN DETAY MODALİ -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetailModal(event)">
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-handle"></div>
+
+    <div class="detail-header">
+      <div class="detail-avatar" id="detailAvatar">??</div>
+      <div class="detail-title">
+        <div class="detail-name" id="detailName">—</div>
+        <div class="detail-subtitle" id="detailSubtitle">Bugünkü hareketler yükleniyor...</div>
+      </div>
+      <button class="btn-detail-close" onclick="closeDetailModal()">✕ Kapat</button>
+    </div>
+
+    <div class="detail-stats">
+      <div class="detail-stat">
+        <div class="ds-num" id="detailTotalBreaks">—</div>
+        <div class="ds-label">Toplam Mola</div>
+      </div>
+      <div class="detail-stat warn" id="detailOverStatBox">
+        <div class="ds-num" id="detailOverBreaks">—</div>
+        <div class="ds-label">Süre Aşımı</div>
+      </div>
+      <div class="detail-stat">
+        <div class="ds-num" id="detailTotalMoves">—</div>
+        <div class="ds-label">Toplam Hareket</div>
+      </div>
+    </div>
+
+    <div class="detail-section-label">Bugünkü Hareketler</div>
+
+    <div class="detail-loading" id="detailLoading">
+      <div class="spinner"></div>
+      <span>Veriler çekiliyor...</span>
+    </div>
+
+    <div class="detail-timeline" id="detailTimeline" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- TOAST BİLDİRİMİ -->
 <div class="toast" id="toast">
   <span class="toast-icon" id="toastIcon"></span>
   <span id="toastMsg"></span>
 </div>
 
-<script>
-  // ============================================================
-  // ⚡ GOOGLE APPS SCRIPT URL'İNİZİ BURAYA YAPIŞTIRINIZ
-  // ============================================================
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8_877SZo0Lbtb9yiYUHVW-6PT22YB6awrYpLQPhdswxGGBVY6P7ffN8LYEySoMAXfzQ/exec';
+<!-- SCRIPTS: önce config, sonra app -->
+<script src="config.js"></script>
+<script src="app.js"></script>
 
-  // ============================================================
-  // 🔐 PATRON ŞİFRESİNİ BURADAN DEĞİŞTİREBİLİRSİNİZ
-  // ============================================================
-  const PATRON_PASSWORD = '5261';
-
-  // Mola uyarı limiti (dakika)
-  const BREAK_LIMIT_MIN = 15;
-
-  let toastTimer = null;
-  let currentEmployee = '';
-  let patronRefreshTimer = null;
-  let workerTimers = {};
-
-  // ── SAAT ──────────────────────────────────────────────────
-  function updateClock() {
-    const now = new Date();
-    document.getElementById('clock').textContent =
-      now.toLocaleDateString('tr-TR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
-      + ' — ' + now.toLocaleTimeString('tr-TR');
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  // ── ÇALIŞAN İSMİ ─────────────────────────────────────────
-  function init() {
-    const saved = localStorage.getItem('employeeName');
-    if (saved && saved.trim()) {
-      currentEmployee = saved.trim();
-      document.getElementById('employeeDisplay').textContent = currentEmployee;
-      loadHistory();
-      show('mainApp');
-    } else {
-      show('setupScreen');
-    }
-  }
-
-  // Geçmişi localStorage'dan yükle
-  function loadHistory() {
-    const saved = localStorage.getItem('actionHistory');
-    if (!saved) return;
-    const items = JSON.parse(saved);
-    const list = document.getElementById('historyList');
-    const empty = list.querySelector('.empty-state');
-    if (empty && items.length > 0) empty.remove();
-    items.forEach(({ icon, name, action, time }) => {
-      const item = document.createElement('div');
-      item.className = 'history-item';
-      item.innerHTML = `
-        <span class="history-icon">${icon}</span>
-        <div class="history-info">
-          <div class="history-name">${name}</div>
-          <div class="history-action">${action}</div>
-        </div>
-        <div class="history-time">${time}</div>`;
-      list.appendChild(item);
-    });
-
-    // Son işleme göre status dot'u güncelle
-    if (items.length > 0) {
-      const last = items[0];
-      const dotMap = { 'İşe Başladı': 'green', 'Molaya Çıktı': 'yellow', 'Moladan Döndü': 'green', 'Mesaisi Bitti': 'red' };
-      const dot = document.getElementById('statusDot');
-      if (dotMap[last.action]) dot.className = 'status-dot ' + dotMap[last.action];
-    }
-  }
-
-  function saveName() {
-    const val = document.getElementById('nameInput').value.trim();
-    if (!val) {
-      shake(document.getElementById('nameInput'));
-      return;
-    }
-    localStorage.setItem('employeeName', val);
-    currentEmployee = val;
-    document.getElementById('employeeDisplay').textContent = currentEmployee;
-    show('mainApp');
-  }
-
-  function changeName() {
-    document.getElementById('nameInput').value = currentEmployee;
-    show('setupScreen');
-    setTimeout(() => document.getElementById('nameInput').focus(), 100);
-  }
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      if (!isHidden('setupScreen')) saveName();
-      if (!isHidden('passwordModal') && document.getElementById('passwordModal').classList.contains('show')) checkPassword();
-    }
-  });
-
-  // ── ANA EYLEMLER ─────────────────────────────────────────
-  async function sendAction(action, icon, dotColor) {
-    if (!currentEmployee) { showToast('⚠️', 'Önce isminizi girin!', 'error'); return; }
-
-    const now = new Date();
-    const timestamp = now.toLocaleString('tr-TR', {
-      year:'numeric', month:'2-digit', day:'2-digit',
-      hour:'2-digit', minute:'2-digit', second:'2-digit'
-    });
-
-    document.getElementById('statusDot').className = 'status-dot ' + dotColor;
-    showToast('', '', 'loading', true);
-
-    try {
-      await fetch(GAS_URL, {
-        method: 'POST', mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employee: currentEmployee, action, timestamp })
-      });
-      addHistory(icon, currentEmployee, action,
-        now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' }));
-      showToast('✅', `"${action}" kaydedildi!`, 'success');
-    } catch (err) {
-      showToast('❌', 'Bağlantı hatası!', 'error');
-    }
-  }
-
-  function addHistory(icon, name, action, time) {
-    const list = document.getElementById('historyList');
-    const empty = list.querySelector('.empty-state');
-    if (empty) empty.remove();
-    const item = document.createElement('div');
-    item.className = 'history-item';
-    item.innerHTML = `
-      <span class="history-icon">${icon}</span>
-      <div class="history-info">
-        <div class="history-name">${name}</div>
-        <div class="history-action">${action}</div>
-      </div>
-      <div class="history-time">${time}</div>`;
-    list.insertBefore(item, list.firstChild);
-    while (list.children.length > 10) list.removeChild(list.lastChild);
-
-    // localStorage'a kaydet
-    const saved = localStorage.getItem('actionHistory');
-    const history = saved ? JSON.parse(saved) : [];
-    history.unshift({ icon, name, action, time });
-    if (history.length > 10) history.pop();
-    localStorage.setItem('actionHistory', JSON.stringify(history));
-  }
-
-  // ── PATRON ŞİFRESİ ───────────────────────────────────────
-  function openPasswordModal() {
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('passwordModal').classList.add('show');
-    setTimeout(() => document.getElementById('passwordInput').focus(), 200);
-  }
-
-  function closePasswordModal() {
-    document.getElementById('passwordModal').classList.remove('show');
-  }
-
-  function checkPassword() {
-    const val = document.getElementById('passwordInput').value;
-    if (val === PATRON_PASSWORD) {
-      closePasswordModal();
-      openPatronPanel();
-    } else {
-      shake(document.getElementById('passwordInput'));
-      document.getElementById('passwordInput').value = '';
-      showToast('❌', 'Hatalı şifre!', 'error');
-    }
-  }
-
-  // ── PATRON PANELİ ────────────────────────────────────────
-  function openPatronPanel() {
-    document.getElementById('mainApp').style.display = 'none';
-    document.getElementById('setupScreen').style.display = 'none';
-    document.getElementById('patronPanel').style.display = 'block';
-    loadPatronData();
-    // Her 30 saniyede otomatik yenile
-    patronRefreshTimer = setInterval(loadPatronData, 30000);
-  }
-
-  function exitPatron() {
-    clearInterval(patronRefreshTimer);
-    document.getElementById('patronPanel').style.display = 'none';
-    init(); // tekrar isim kontrolü yap
-  }
-
-  async function loadPatronData() {
-    document.getElementById('refreshInfo').textContent = 'Veriler güncelleniyor...';
-    try {
-      // GAS CORS kısıtlaması nedeniyle no-cors POST ile veri çekiyoruz
-      const res = await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'getAll' })
-      });
-      // no-cors'ta response okunamaz, alternatif: jsonp benzeri yaklaşım
-      // Bunun yerine script tag trick kullanıyoruz
-      loadViaScript();
-    } catch (err) {
-      document.getElementById('refreshInfo').textContent = '⚠️ Veri alınamadı.';
-    }
-  }
-
-  function loadViaScript() {
-    // GAS'tan JSONP benzeri yaklaşım: URL'e callback parametresi ekle
-    const callbackName = 'gasCallback_' + Date.now();
-    const script = document.createElement('script');
-
-    window[callbackName] = function(data) {
-      document.getElementById('refreshInfo').textContent = '';
-      try {
-        renderWorkers(data);
-        const now = new Date();
-        document.getElementById('refreshInfo').textContent =
-          `Son güncelleme: ${now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })} · 30 sn'de bir yenilenir`;
-      } catch(e) {
-        document.getElementById('refreshInfo').textContent = '⚠️ Veri işlenemedi.';
-      }
-      delete window[callbackName];
-      script.remove();
-    };
-
-    script.onerror = function() {
-      document.getElementById('refreshInfo').textContent = '⚠️ Veri alınamadı. GAS URL\'ini ve yayın ayarlarını kontrol edin.';
-      delete window[callbackName];
-      script.remove();
-    };
-
-    script.src = GAS_URL + '?callback=' + callbackName;
-    document.head.appendChild(script);
-  }
-
-  function renderWorkers(rows) {
-    const latest = {};
-    rows.forEach(row => {
-      const [rawName, action, ts] = row;
-      // Boş satırları atla (— — gibi)
-      if (!rawName || rawName === '—' || !action || action === '—') return;
-      // İsmi normalize et: trim + her kelimenin baş harfi büyük
-      const name = rawName.trim().split(' ')
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(' ');
-      const parsedTime = parseTS(ts);
-      if (!latest[name] || parsedTime > latest[name].time) {
-        latest[name] = { action, ts, time: parsedTime };
-      }
-    });
-
-    const list = document.getElementById('workerList');
-    list.innerHTML = '';
-
-    if (Object.keys(latest).length === 0) {
-      list.innerHTML = '<div class="patron-empty">📭 Henüz kayıt yok</div>';
-      return;
-    }
-
-    let working = 0, onBreak = 0, overLimit = 0;
-
-    const sorted = Object.entries(latest).sort((a, b) => {
-      const order = { 'Molaya Çıktı': 0, 'İşe Başladı': 1, 'Moladan Döndü': 1, 'Mesaisi Bitti': 2 };
-      return (order[a[1].action] ?? 1) - (order[b[1].action] ?? 1);
-    });
-
-    sorted.forEach(([name, data]) => {
-      const { action, time } = data;
-      const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-      const diffMin = Math.floor((Date.now() - time) / 60000);
-
-      let cardClass = 'worker-card';
-      let statusText = '';
-      let timerText = '';
-      let alertBadge = '';
-
-      if (action === 'Molaya Çıktı') {
-        const over = diffMin > BREAK_LIMIT_MIN;
-        cardClass += over ? ' over-limit' : ' on-break';
-        statusText = over
-          ? `🔴 Molada — <b>${diffMin} dk</b>`
-          : `🟡 Molada — ${diffMin} dk`;
-        timerText = diffMin + ' dk';
-        if (over) alertBadge = '<span class="alert-badge">AŞILDI</span>';
-        if (over) overLimit++; else onBreak++;
-      } else if (action === 'İşe Başladı' || action === 'Moladan Döndü') {
-        cardClass += ' working';
-        statusText = '🟢 Çalışıyor';
-        working++;
-      } else if (action === 'Mesaisi Bitti') {
-        cardClass += ' off';
-        statusText = '⚫ Mesai bitti';
-      } else {
-        cardClass += ' off';
-        statusText = action;
-      }
-
-      const card = document.createElement('div');
-      card.className = cardClass;
-      card.innerHTML = `
-        <div class="worker-avatar">${initials}</div>
-        <div class="worker-info">
-          <div class="worker-name">${name}${alertBadge}</div>
-          <div class="worker-status">${statusText}</div>
-        </div>
-        ${timerText ? `<div class="worker-timer">${timerText}</div>` : ''}
-      `;
-      list.appendChild(card);
-    });
-
-    document.getElementById('countWorking').textContent = working;
-    document.getElementById('countBreak').textContent = onBreak;
-    document.getElementById('countAlert').textContent = overLimit;
-  }
-
-  // Tarih parse — Sheets'ten gelen tüm formatları destekler
-  function parseTS(ts) {
-    if (!ts) return new Date(0);
-
-    // Sheets bazen Date objesi döndürür
-    if (ts instanceof Date) return ts;
-
-    ts = String(ts).trim();
-    if (!ts || ts === '—') return new Date(0);
-
-    // Format 1: "24.04.2026 21:09:07"
-    const m1 = ts.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/);
-    if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1], +m1[4], +m1[5], +m1[6]);
-
-    // Format 2: "2026-04-24T21:09:07"
-    const m2 = ts.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
-    if (m2) return new Date(+m2[1], +m2[2]-1, +m2[3], +m2[4], +m2[5], +m2[6]);
-
-    // Format 3: "24.04.2026 21:09" (saniyesiz)
-    const m3 = ts.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})$/);
-    if (m3) return new Date(+m3[3], +m3[2]-1, +m3[1], +m3[4], +m3[5], 0);
-
-    // Fallback
-    const d = new Date(ts);
-    return isNaN(d) ? new Date(0) : d;
-  }
-
-  // ── YARDIMCI ─────────────────────────────────────────────
-  function show(id) {
-    ['setupScreen','mainApp','patronPanel'].forEach(s => {
-      const el = document.getElementById(s);
-      if (el) el.style.display = 'none';
-    });
-    const target = document.getElementById(id);
-    if (target) target.style.display = id === 'setupScreen' ? 'flex' : 'block';
-  }
-
-  function isHidden(id) {
-    const el = document.getElementById(id);
-    return !el || el.style.display === 'none' || el.style.display === '';
-  }
-
-  function shake(el) {
-    el.classList.remove('shake');
-    void el.offsetWidth;
-    el.classList.add('shake');
-    el.style.borderColor = 'var(--red)';
-    setTimeout(() => el.style.borderColor = '', 1500);
-  }
-
-  function showToast(icon, msg, type, isLoading = false) {
-    clearTimeout(toastTimer);
-    const toast = document.getElementById('toast');
-    toast.className = 'toast ' + type;
-    if (isLoading) {
-      document.getElementById('toastIcon').innerHTML = '<div class="spinner"></div>';
-      document.getElementById('toastMsg').textContent = 'Gönderiliyor...';
-    } else {
-      document.getElementById('toastIcon').textContent = icon;
-      document.getElementById('toastMsg').textContent = msg;
-    }
-    toast.classList.add('show');
-    if (!isLoading) toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
-  }
-
-  init();
-</script>
 </body>
 </html>
