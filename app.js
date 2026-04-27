@@ -4,10 +4,11 @@
    ============================================================ */
 
 // ── GLOBAL DEĞİŞKENLER ───────────────────────────────────────
-let toastTimer       = null;
-let currentEmployee  = '';
+let toastTimer         = null;
+let currentEmployee    = '';
 let patronRefreshTimer = null;
-let workerTimers     = {};
+let workerTimers       = {};
+let breakNotifTimer    = null; // mola aşım bildirimi için
 
 // ── SAAT ──────────────────────────────────────────────────────
 function updateClock() {
@@ -59,14 +60,15 @@ function loadHistory() {
   const empty = list.querySelector('.empty-state');
   if (empty && items.length > 0) empty.remove();
 
-  items.forEach(({ icon, name, action, time, overBreak }) => {
+  items.forEach(({ icon, name, action, time, overBreak, overBreakMsg }) => {
+    const warnText = overBreak ? ` — ⚠️ ${overBreakMsg || 'Süre aşıldı!'}` : '';
     const item = document.createElement('div');
     item.className = 'history-item' + (overBreak ? ' over-break' : '');
     item.innerHTML = `
       <span class="history-icon">${icon}</span>
       <div class="history-info">
         <div class="history-name">${name}</div>
-        <div class="history-action">${action}${overBreak ? ' — ⚠️ 15 dk aşıldı!' : ''}</div>
+        <div class="history-action">${action}${warnText}</div>
       </div>
       <div class="history-time">${time}</div>`;
     list.appendChild(item);
@@ -76,28 +78,30 @@ function loadHistory() {
   if (items.length > 0) {
     const last   = items[0];
     const dotMap = {
-      'İşe Başladı':  'green',
-      'Molaya Çıktı': 'yellow',
-      'Moladan Döndü':'green',
-      'Mesaisi Bitti':'red'
+      'İşe Başladı':   'green',
+      'Çay Molası':    'yellow',
+      'Yemek Molası':  'yellow',
+      'Moladan Döndü': 'green',
+      'Mesaisi Bitti': 'red'
     };
     const dot = document.getElementById('statusDot');
     if (dotMap[last.action]) dot.className = 'status-dot ' + dotMap[last.action];
   }
 }
 
-function addHistory(icon, name, action, time, overBreak = false) {
+function addHistory(icon, name, action, time, overBreak = false, overBreakMsg = '') {
   const list  = document.getElementById('historyList');
   const empty = list.querySelector('.empty-state');
   if (empty) empty.remove();
 
+  const warnText = overBreak ? ` — ⚠️ ${overBreakMsg || '15 dk aşıldı!'}` : '';
   const item = document.createElement('div');
   item.className = 'history-item' + (overBreak ? ' over-break' : '');
   item.innerHTML = `
     <span class="history-icon">${icon}</span>
     <div class="history-info">
       <div class="history-name">${name}</div>
-      <div class="history-action">${action}${overBreak ? ' — ⚠️ 15 dk aşıldı!' : ''}</div>
+      <div class="history-action">${action}${warnText}</div>
     </div>
     <div class="history-time">${time}</div>`;
   list.insertBefore(item, list.firstChild);
@@ -106,7 +110,7 @@ function addHistory(icon, name, action, time, overBreak = false) {
   // localStorage'a kaydet
   const saved   = localStorage.getItem('actionHistory');
   const history = saved ? JSON.parse(saved) : [];
-  history.unshift({ icon, name, action, time, overBreak });
+  history.unshift({ icon, name, action, time, overBreak, overBreakMsg });
   if (history.length > 10) history.pop();
   localStorage.setItem('actionHistory', JSON.stringify(history));
 }
@@ -124,20 +128,24 @@ async function sendAction(action, icon, dotColor) {
     hour: '2-digit', minute: '2-digit', second: '2-digit'
   });
 
-  // Mola aşımı tespiti: "Moladan Döndü" geliyorsa son "Molaya Çıktı" kaydını bul
-  let overBreak = false;
+  // Mola aşımı tespiti: "Moladan Döndü" geliyorsa son mola kaydını bul
+  let overBreak    = false;
+  let overBreakMsg = '';
   if (action === 'Moladan Döndü') {
     const saved = localStorage.getItem('actionHistory');
     if (saved) {
-      const history = JSON.parse(saved);
-      const lastBreak = history.find(h => h.action === 'Molaya Çıktı');
+      const history   = JSON.parse(saved);
+      const lastBreak = history.find(h => h.action === 'Çay Molası' || h.action === 'Yemek Molası');
       if (lastBreak) {
-        // "HH:MM" formatındaki time'dan dakika farkı hesapla
         const [hh, mm] = lastBreak.time.split(':').map(Number);
         const breakDate = new Date();
         breakDate.setHours(hh, mm, 0, 0);
         const diffMin = Math.floor((now - breakDate) / 60000);
-        if (diffMin > BREAK_LIMIT_MIN) overBreak = true;
+        const limit   = lastBreak.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
+        if (diffMin > limit) {
+          overBreak    = true;
+          overBreakMsg = `${limit} dk aşıldı! (${diffMin} dk)`;
+        }
       }
     }
   }
@@ -154,7 +162,7 @@ async function sendAction(action, icon, dotColor) {
     });
     addHistory(icon, currentEmployee, action,
       now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-      overBreak);
+      overBreak, overBreakMsg);
     showToast('✅', `"${action}" kaydedildi!`, 'success');
   } catch (err) {
     showToast('❌', 'Bağlantı hatası!', 'error');
@@ -275,7 +283,7 @@ function renderWorkers(rows) {
   let working = 0, onBreak = 0, overLimit = 0;
 
   const sorted = Object.entries(latest).sort((a, b) => {
-    const order = { 'Molaya Çıktı': 0, 'İşe Başladı': 1, 'Moladan Döndü': 1, 'Mesaisi Bitti': 2 };
+    const order = { 'Çay Molası': 0, 'Yemek Molası': 0, 'İşe Başladı': 1, 'Moladan Döndü': 1, 'Mesaisi Bitti': 2 };
     return (order[a[1].action] ?? 1) - (order[b[1].action] ?? 1);
   });
 
@@ -289,12 +297,21 @@ function renderWorkers(rows) {
     let timerText   = '';
     let alertBadge  = '';
 
-    if (action === 'Molaya Çıktı') {
+    if (action === 'Çay Molası') {
       const over = diffMin > BREAK_LIMIT_MIN;
       cardClass  += over ? ' over-limit' : ' on-break';
       statusText  = over
-        ? `🔴 Molada — <b>${diffMin} dk</b>`
-        : `🟡 Molada — ${diffMin} dk`;
+        ? `🔴 Çay molasında — <b>${diffMin} dk</b>`
+        : `🟡 Çay molasında — ${diffMin} dk`;
+      timerText = diffMin + ' dk';
+      if (over) alertBadge = '<span class="alert-badge">AŞILDI</span>';
+      if (over) overLimit++; else onBreak++;
+    } else if (action === 'Yemek Molası') {
+      const over = diffMin > LUNCH_LIMIT_MIN;
+      cardClass  += over ? ' over-limit' : ' on-break';
+      statusText  = over
+        ? `🔴 Yemek molasında — <b>${diffMin} dk</b>`
+        : `🍽️ Yemek molasında — ${diffMin} dk`;
       timerText = diffMin + ' dk';
       if (over) alertBadge = '<span class="alert-badge">AŞILDI</span>';
       if (over) overLimit++; else onBreak++;
@@ -410,26 +427,29 @@ function renderWorkerDetail(targetName, rows) {
   myRows.sort((a, b) => a.time - b.time);
 
   // İstatistikleri hesapla
-  let totalBreaks = 0;
-  let overBreaks  = 0;
+  let totalBreaks      = 0;
+  let overBreaks       = 0;
   let pendingBreakTime = null;
+  let pendingBreakLimit = BREAK_LIMIT_MIN;
 
-  // Her "Molaya Çıktı" – "Moladan Döndü" / "Mesaisi Bitti" çiftini işle
+  // Her "mola çıkış" – "Moladan Döndü" / "Mesaisi Bitti" çiftini işle
   myRows.forEach(row => {
-    if (row.action === 'Molaya Çıktı') {
-      pendingBreakTime = row.time;
+    if (row.action === 'Çay Molası' || row.action === 'Yemek Molası') {
+      pendingBreakTime  = row.time;
+      pendingBreakLimit = row.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
       totalBreaks++;
     } else if ((row.action === 'Moladan Döndü' || row.action === 'Mesaisi Bitti') && pendingBreakTime) {
       const diffMin = Math.floor((row.time - pendingBreakTime) / 60000);
-      if (diffMin > BREAK_LIMIT_MIN) overBreaks++;
-      pendingBreakTime = null;
+      if (diffMin > pendingBreakLimit) overBreaks++;
+      pendingBreakTime  = null;
+      pendingBreakLimit = BREAK_LIMIT_MIN;
     }
   });
 
-  // Hâlâ molada mı? (kapanmamış mola)
+  // Hâlâ molada mı?
   if (pendingBreakTime) {
     const diffMin = Math.floor((Date.now() - pendingBreakTime) / 60000);
-    if (diffMin > BREAK_LIMIT_MIN) overBreaks++;
+    if (diffMin > pendingBreakLimit) overBreaks++;
   }
 
   // İstatistik kutularını doldur
@@ -459,6 +479,7 @@ function renderWorkerDetail(targetName, rows) {
 
   // Her satırı render et; molalarda süre hesapla
   let lastBreakStart = null;
+  let lastBreakLimit = BREAK_LIMIT_MIN;
   myRows.forEach((row, i) => {
     const timeStr = row.time.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     let rowClass  = 'detail-row';
@@ -468,16 +489,21 @@ function renderWorkerDetail(targetName, rows) {
 
     if (row.action === 'İşe Başladı') {
       rowClass += ' row-start'; icon = '🟢';
-    } else if (row.action === 'Molaya Çıktı') {
-      rowClass += ' row-break'; icon = '🟡';
+    } else if (row.action === 'Çay Molası') {
+      rowClass += ' row-break'; icon = '☕';
       lastBreakStart = row.time;
+      lastBreakLimit = BREAK_LIMIT_MIN;
+    } else if (row.action === 'Yemek Molası') {
+      rowClass += ' row-break'; icon = '🍽️';
+      lastBreakStart = row.time;
+      lastBreakLimit = LUNCH_LIMIT_MIN;
     } else if (row.action === 'Moladan Döndü') {
       if (lastBreakStart) {
         const diffMin = Math.floor((row.time - lastBreakStart) / 60000);
-        const over    = diffMin > BREAK_LIMIT_MIN;
+        const over    = diffMin > lastBreakLimit;
         rowClass += over ? ' row-over' : ' row-break-end';
         icon      = over ? '🔴' : '🔵';
-        note      = `Mola süresi: ${diffMin} dk`;
+        note      = `Mola süresi: ${diffMin} dk (limit: ${lastBreakLimit} dk)`;
         noteClass = over ? 'over' : '';
         lastBreakStart = null;
       } else {
@@ -488,7 +514,7 @@ function renderWorkerDetail(targetName, rows) {
       if (lastBreakStart) {
         const diffMin = Math.floor((row.time - lastBreakStart) / 60000);
         note = `Mola kapanmadan mesai bitti (${diffMin} dk)`;
-        noteClass = diffMin > BREAK_LIMIT_MIN ? 'over' : '';
+        noteClass = diffMin > lastBreakLimit ? 'over' : '';
         lastBreakStart = null;
       }
     }
