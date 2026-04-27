@@ -9,10 +9,11 @@ let isPatron           = false;
 let toastTimer         = null;
 let patronRefreshTimer = null;
 let allWorkerRows      = [];
-let liveTimerInterval  = null;  // çalışan ekranı canlı sayaç
+let liveTimerInterval  = null;  // çalışan ekranı canlı sayaç (mola için)
 let workerCardTimers   = {};    // patron kartları canlı sayaç
 let currentTab         = 0;     // 0=patron 1=çalışan
 let touchStartX        = 0;
+let isSending          = false; // çift tıklama kilidi
 
 // ── SAAT ─────────────────────────────────────────────────────
 function updateClock() {
@@ -126,32 +127,41 @@ function startLiveTimer() {
 }
 
 function updateLiveTimer() {
-  const timerEl = document.getElementById('liveTimer');
+  // Sadece mola durumundaki son işlem kartındaki sayacı güncelle
+  const timerEl = document.getElementById('lastActionTimer');
   if (!timerEl) return;
 
   const saved = localStorage.getItem('actionHistory');
-  if (!saved) { timerEl.textContent = ''; return; }
+  if (!saved) { timerEl.style.display = 'none'; return; }
 
   const history = JSON.parse(saved);
   const last    = history[0];
-  if (!last || last.action === 'Mesaisi Bitti') { timerEl.textContent = ''; return; }
+  const isMola  = last && (last.action === 'Çay Molası' || last.action === 'Yemek Molası');
 
-  // Son işlemin zamanını parse et (HH:MM formatı)
-  const [hh, mm] = last.time.split(':').map(Number);
-  const base      = new Date();
-  base.setHours(hh, mm, 0, 0);
-  const diffMs = Date.now() - base;
-  if (diffMs < 0) { timerEl.textContent = ''; return; }
+  if (!last || !isMola) { timerEl.style.display = 'none'; return; }
+
+  // Saniyeli timestamp kullan (timeMs kaydedildiyse)
+  let base;
+  if (last.timeMs) {
+    base = new Date(last.timeMs);
+  } else {
+    // Eski kayıtlar için geriye dönük uyumluluk (HH:MM)
+    const [hh, mm] = last.time.split(':').map(Number);
+    base = new Date();
+    base.setHours(hh, mm, 0, 0);
+  }
+
+  const diffMs  = Date.now() - base;
+  if (diffMs < 0) { timerEl.style.display = 'none'; return; }
 
   const diffMin = Math.floor(diffMs / 60000);
   const diffSec = Math.floor((diffMs % 60000) / 1000);
+  const limit   = last.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
+  const isOver  = diffMin >= limit;
 
-  const isMola = last.action === 'Çay Molası' || last.action === 'Yemek Molası';
-  const limit  = last.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
-  const isOver = isMola && diffMin >= limit;
-
-  timerEl.textContent   = `${diffMin}dk ${diffSec}s`;
-  timerEl.style.color   = isOver ? 'var(--red)' : (isMola ? 'var(--yellow)' : 'var(--text-muted)');
+  timerEl.style.display    = 'inline-flex';
+  timerEl.textContent      = `${diffMin}dk ${diffSec}s`;
+  timerEl.style.color      = isOver ? 'var(--red)' : 'var(--yellow)';
   timerEl.style.fontWeight = '700';
 }
 
@@ -164,15 +174,19 @@ function loadHistory() {
   const empty = list.querySelector('.empty-state');
   if (empty && items.length > 0) empty.remove();
 
-  items.forEach(({ icon, name, action, time, overBreak, overBreakMsg }) => {
+  items.forEach(({ icon, name, action, time, overBreak, overBreakMsg }, idx) => {
     const warnText = overBreak ? ` — ⚠️ ${overBreakMsg || 'Süre aşıldı!'}` : '';
+    const isMola   = action === 'Çay Molası' || action === 'Yemek Molası';
+    const timerHtml = (idx === 0 && isMola)
+      ? `<span class="history-live-timer" id="lastActionTimer" style="display:none;margin-left:6px;font-size:12px;"></span>`
+      : '';
     const item = document.createElement('div');
     item.className = 'history-item' + (overBreak ? ' over-break' : '');
     item.innerHTML = `
       <span class="history-icon">${icon}</span>
       <div class="history-info">
         <div class="history-name">${name}</div>
-        <div class="history-action">${action}${warnText}</div>
+        <div class="history-action">${action}${warnText}${timerHtml}</div>
       </div>
       <div class="history-time">${time}</div>`;
     list.appendChild(item);
@@ -188,11 +202,19 @@ function loadHistory() {
   }
 }
 
-function addHistory(icon, name, action, time, overBreak = false, overBreakMsg = '') {
+function addHistory(icon, name, action, time, overBreak = false, overBreakMsg = '', timeMs = null) {
   const list  = document.getElementById('historyList');
   const empty = list.querySelector('.empty-state');
   if (empty) empty.remove();
 
+  // Önceki ilk elemanın sayacını kaldır
+  const prevTimer = list.querySelector('#lastActionTimer');
+  if (prevTimer) prevTimer.remove();
+
+  const isMola   = action === 'Çay Molası' || action === 'Yemek Molası';
+  const timerHtml = isMola
+    ? `<span class="history-live-timer" id="lastActionTimer" style="display:none;margin-left:6px;font-size:12px;"></span>`
+    : '';
   const warnText = overBreak ? ` — ⚠️ ${overBreakMsg || 'Süre aşıldı!'}` : '';
   const item = document.createElement('div');
   item.className = 'history-item' + (overBreak ? ' over-break' : '');
@@ -200,7 +222,7 @@ function addHistory(icon, name, action, time, overBreak = false, overBreakMsg = 
     <span class="history-icon">${icon}</span>
     <div class="history-info">
       <div class="history-name">${name}</div>
-      <div class="history-action">${action}${warnText}</div>
+      <div class="history-action">${action}${warnText}${timerHtml}</div>
     </div>
     <div class="history-time">${time}</div>`;
   list.insertBefore(item, list.firstChild);
@@ -208,14 +230,48 @@ function addHistory(icon, name, action, time, overBreak = false, overBreakMsg = 
 
   const saved   = localStorage.getItem('actionHistory');
   const history = saved ? JSON.parse(saved) : [];
-  history.unshift({ icon, name, action, time, overBreak, overBreakMsg });
+  history.unshift({ icon, name, action, time, timeMs: timeMs || Date.now(), overBreak, overBreakMsg });
   if (history.length > 10) history.pop();
   localStorage.setItem('actionHistory', JSON.stringify(history));
 }
 
 // ── ANA EYLEMLER ─────────────────────────────────────────────
+// Son aksiyona göre hangi butonlara basılabilir (whitelist)
+const ALLOWED_NEXT = {
+  'İşe Başladı':   new Set(['Çay Molası', 'Yemek Molası', 'Mesaisi Bitti']),
+  'Çay Molası':    new Set(['Moladan Döndü']),
+  'Yemek Molası':  new Set(['Moladan Döndü']),
+  'Moladan Döndü': new Set(['Çay Molası', 'Yemek Molası', 'Mesaisi Bitti']),
+  'Mesaisi Bitti': new Set(['İşe Başladı']),
+};
+
+// Hata mesajları: son aksiyon baz alınır (ne yapılamaz açıklanır)
+const ACTION_ERROR_MSG = {
+  'İşe Başladı':   'Zaten çalışıyorsunuz, önce mola alın veya mesai bitirin!',
+  'Çay Molası':    'Önce moladan dönmelisiniz!',
+  'Yemek Molası':  'Önce moladan dönmelisiniz!',
+  'Moladan Döndü': 'Zaten çalışıyorsunuz!',
+  'Mesaisi Bitti': 'Önce işe başlamalınız!',
+};
+
 async function sendAction(action, icon, dotColor) {
   if (!currentEmployee) { showToast('⚠️','Önce isminizi girin!','error'); return; }
+  if (isSending) return; // çift tıklama koruması
+
+  // ── Geçerli sıra kontrolü (whitelist) ────────────────────
+  const saved = localStorage.getItem('actionHistory');
+  if (saved) {
+    const hist       = JSON.parse(saved);
+    const lastAction = hist[0]?.action;
+
+    if (lastAction && ALLOWED_NEXT[lastAction] && !ALLOWED_NEXT[lastAction].has(action)) {
+      const msg = ACTION_ERROR_MSG[lastAction] || 'Geçersiz işlem sırası!';
+      showToast('⚠️', msg, 'error');
+      return;
+    }
+  }
+
+  isSending = true;
 
   const now       = new Date();
   const timestamp = now.toLocaleString('tr-TR', {
@@ -231,9 +287,11 @@ async function sendAction(action, icon, dotColor) {
       const hist = JSON.parse(saved);
       const lb   = hist.find(h => h.action === 'Çay Molası' || h.action === 'Yemek Molası');
       if (lb) {
-        const [hh, mm] = lb.time.split(':').map(Number);
-        const bd = new Date(); bd.setHours(hh, mm, 0, 0);
-        const diffMin = Math.floor((now - bd) / 60000);
+        const breakStart = lb.timeMs ? new Date(lb.timeMs) : (() => {
+          const [hh, mm] = lb.time.split(':').map(Number);
+          const d = new Date(); d.setHours(hh, mm, 0, 0); return d;
+        })();
+        const diffMin = Math.floor((now - breakStart) / 60000);
         const limit   = lb.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
         if (diffMin > limit) { overBreak = true; overBreakMsg = `${limit} dk aşıldı! (${diffMin} dk)`; }
       }
@@ -244,6 +302,10 @@ async function sendAction(action, icon, dotColor) {
   if (dot) dot.className = 'status-dot ' + dotColor;
   showToast('','','loading', true);
 
+  // Tüm butonları gerçekten devre dışı bırak (disabled özelliği onclick'i de engeller)
+  const btns = document.querySelectorAll('.btn');
+  btns.forEach(b => { b.disabled = true; b.classList.add('sending'); });
+
   try {
     await fetch(GAS_URL, {
       method:'POST', mode:'no-cors',
@@ -251,10 +313,15 @@ async function sendAction(action, icon, dotColor) {
       body: JSON.stringify({ employee: currentEmployee, action, timestamp })
     });
     const timeStr = now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
-    addHistory(icon, currentEmployee, action, timeStr, overBreak, overBreakMsg);
-    showToast('✅', `"${action}" kaydedildi!`, 'success');
+    addHistory(icon, currentEmployee, action, timeStr, overBreak, overBreakMsg, now.getTime());
+    showToast('\u2705', `"${action}" kaydedildi!`, 'success');
   } catch (err) {
-    showToast('❌','Bağlantı hatası!','error');
+    showToast('\u274C','Bağlantı hatası!','error');
+  } finally {
+    setTimeout(() => {
+      isSending = false;
+      btns.forEach(b => { b.disabled = false; b.classList.remove('sending'); });
+    }, 3000); // 3 saniye — çift tıklama + ağ gecikmesi koruması
   }
 }
 

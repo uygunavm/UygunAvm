@@ -365,6 +365,16 @@ select option { background: var(--surface2); }
 .btn:active { transform: scale(0.95); filter: brightness(0.9); }
 .btn:hover  { filter: brightness(1.08); }
 
+/* Gönderim sırasında butonları devre dışı göster */
+.btn.sending,
+.btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  transform: none !important;
+  filter: none !important;
+  cursor: not-allowed;
+}
+
 /* Tam genişlik buton (2 sütunu kaplar) */
 .btn-full {
   grid-column: 1 / -1;
@@ -933,6 +943,20 @@ select option { background: var(--surface2); }
 }
 
 /* ── 9. GEÇMİŞ — AŞIM UYARISI ──────────────────────────── */
+.history-live-timer {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--yellow);
+  background: rgba(245, 197, 66, 0.12);
+  border-radius: 100px;
+  padding: 1px 7px;
+  margin-left: 6px;
+  transition: color 0.3s;
+}
+
 .history-item.over-break {
   background: rgba(255, 90, 90, 0.12);
   border: 1px solid rgba(255, 90, 90, 0.3);
