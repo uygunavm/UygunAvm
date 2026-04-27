@@ -1,15 +1,16 @@
 // ============================================================
-// ⚡ GOOGLE APPS SCRIPT URL'İNİZİ BURAYA YAPIŞTIRINIZ
+// ⚡ GOOGLE APPS SCRIPT URL
 // ============================================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8_877SZo0Lbtb9yiYUHVW-6PT22YB6awrYpLQPhdswxGGBVY6P7ffN8LYEySoMAXfzQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxRsWNhKlkee4JELMhSTFRHJPzfqZrh79AoLDTgGAWFhDYZu074h9-4TM_4Qn_oxkFa9Q/exec';
 
 // ============================================================
-// 🔐 PATRON ŞİFRESİNİ BURADAN DEĞİŞTİREBİLİRSİNİZ
+// 🔐 PATRON İSİMLERİ — Bu listedeki isimler otomatik patron görünümünde açılır
+// Büyük/küçük harf fark etmez. Tam isim soyisim yazın.
 // ============================================================
-const PATRON_PASSWORD = '5261';
+const PATRON_NAMES = ['Cansın Tiryaki', 'Timur Tiryaki'];
 
 // ============================================================
-// ⏱️ MOLA UYARI LİMİTLERİ (dakika cinsinden)
+// ⏱️ MOLA LİMİTLERİ (dakika)
 // ============================================================
-const BREAK_LIMIT_MIN = 15;  // Çay molası limiti
-const LUNCH_LIMIT_MIN = 30;  // Yemek molası limiti
+const BREAK_LIMIT_MIN = 15;   // Çay molası
+const LUNCH_LIMIT_MIN = 30;   // Yemek molası

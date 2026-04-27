@@ -1,57 +1,161 @@
 /* ============================================================
-   UYGUN AVM TAKİP — Uygulama Mantığı
-   Bağımlılık: config.js (GAS_URL, PATRON_PASSWORD, BREAK_LIMIT_MIN)
+   UYGUN AVM TAKİP — app.js
+   Bağımlılık: config.js
    ============================================================ */
 
-// ── GLOBAL DEĞİŞKENLER ───────────────────────────────────────
-let toastTimer         = null;
+// ── GLOBALS ──────────────────────────────────────────────────
 let currentEmployee    = '';
+let isPatron           = false;
+let toastTimer         = null;
 let patronRefreshTimer = null;
-let workerTimers       = {};
-let breakNotifTimer    = null; // mola aşım bildirimi için
+let allWorkerRows      = [];
+let liveTimerInterval  = null;  // çalışan ekranı canlı sayaç
+let workerCardTimers   = {};    // patron kartları canlı sayaç
+let currentTab         = 0;     // 0=patron 1=çalışan
+let touchStartX        = 0;
 
-// ── SAAT ──────────────────────────────────────────────────────
+// ── SAAT ─────────────────────────────────────────────────────
 function updateClock() {
   const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-    + ' — ' + now.toLocaleTimeString('tr-TR');
+  const el  = document.getElementById('clock');
+  if (el) el.textContent =
+    now.toLocaleDateString('tr-TR', { weekday:'short', month:'short', day:'numeric' })
+    + ' ' + now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
 }
 updateClock();
 setInterval(updateClock, 1000);
 
-// ── ÇALIŞAN İSMİ ─────────────────────────────────────────────
+// ── PATRON ALGILAMA ───────────────────────────────────────────
+function checkIsPatron(name) {
+  const norm = name.trim().toLowerCase();
+  return PATRON_NAMES.some(p => p.trim().toLowerCase() === norm);
+}
+
+// ── INIT ─────────────────────────────────────────────────────
 function init() {
   const saved = localStorage.getItem('employeeName');
   if (saved && saved.trim()) {
     currentEmployee = saved.trim();
-    document.getElementById('employeeDisplay').textContent = currentEmployee;
-    loadHistory();
-    show('mainApp');
+    isPatron        = checkIsPatron(currentEmployee);
+    startApp();
   } else {
-    show('setupScreen');
+    document.getElementById('setupScreen').style.display = 'flex';
+    document.getElementById('mainApp').style.display     = 'none';
   }
 }
 
 function saveName() {
   const val = document.getElementById('nameInput').value.trim();
-  if (!val) {
-    shake(document.getElementById('nameInput'));
-    return;
-  }
+  if (!val) { shake(document.getElementById('nameInput')); return; }
   localStorage.setItem('employeeName', val);
   currentEmployee = val;
-  document.getElementById('employeeDisplay').textContent = currentEmployee;
-  show('mainApp');
+  isPatron        = checkIsPatron(val);
+  startApp();
 }
 
 function changeName() {
-  document.getElementById('nameInput').value = currentEmployee;
-  show('setupScreen');
+  document.getElementById('nameInput').value   = currentEmployee;
+  document.getElementById('setupScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display     = 'none';
   setTimeout(() => document.getElementById('nameInput').focus(), 100);
 }
 
-// ── GEÇMİŞ (localStorage) ────────────────────────────────────
+function startApp() {
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display     = 'block';
+
+  // Tab etiketleri
+  const shortName = currentEmployee.split(' ')[0];
+  document.getElementById('tabNameShort').textContent    = shortName;
+  document.getElementById('employeeDisplay').textContent = currentEmployee;
+
+  // Tab bar görünürlüğü: patron değilse patron tabı gizle
+  if (!isPatron) {
+    document.getElementById('tabBtnPatron').style.display = 'none';
+    switchTab(1, true); // instant — kayma olmasın
+  } else {
+    document.getElementById('tabBtnPatron').style.display = '';
+    switchTab(0, true); // instant
+    startPatronRefresh();
+  }
+
+  loadHistory();
+  startLiveTimer();
+}
+
+// ── TAB SİSTEMİ ──────────────────────────────────────────────
+function switchTab(index, instant = false) {
+  currentTab = index;
+  const viewport  = document.getElementById('tabViewport');
+  const pills     = document.querySelectorAll('.tab-pill');
+  const indicator = document.getElementById('tabIndicator');
+
+  // Viewport kaydır — instant ise animasyon yok
+  viewport.scrollTo({ left: index * viewport.offsetWidth, behavior: instant ? 'instant' : 'smooth' });
+
+  // Aktif pill
+  pills.forEach((p, i) => p.classList.toggle('active', i === index));
+
+  // Gösterge çizgisi
+  const activePill = pills[index];
+  if (activePill) {
+    indicator.style.width     = activePill.offsetWidth + 'px';
+    indicator.style.transform = `translateX(${activePill.offsetLeft}px)`;
+  }
+
+  // Patron paneline geçince veriyi yükle
+  if (index === 0 && isPatron) loadPatronData();
+}
+
+// Swipe desteği
+document.addEventListener('DOMContentLoaded', () => {
+  const vp = document.getElementById('tabViewport');
+  if (!vp) return;
+  vp.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  vp.addEventListener('touchend',   e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) switchTab(diff > 0 ? 1 : 0);
+  });
+});
+
+// ── CANLI SAYAÇ (çalışan ekranı) ─────────────────────────────
+function startLiveTimer() {
+  clearInterval(liveTimerInterval);
+  liveTimerInterval = setInterval(updateLiveTimer, 1000);
+  updateLiveTimer();
+}
+
+function updateLiveTimer() {
+  const timerEl = document.getElementById('liveTimer');
+  if (!timerEl) return;
+
+  const saved = localStorage.getItem('actionHistory');
+  if (!saved) { timerEl.textContent = ''; return; }
+
+  const history = JSON.parse(saved);
+  const last    = history[0];
+  if (!last || last.action === 'Mesaisi Bitti') { timerEl.textContent = ''; return; }
+
+  // Son işlemin zamanını parse et (HH:MM formatı)
+  const [hh, mm] = last.time.split(':').map(Number);
+  const base      = new Date();
+  base.setHours(hh, mm, 0, 0);
+  const diffMs = Date.now() - base;
+  if (diffMs < 0) { timerEl.textContent = ''; return; }
+
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffSec = Math.floor((diffMs % 60000) / 1000);
+
+  const isMola = last.action === 'Çay Molası' || last.action === 'Yemek Molası';
+  const limit  = last.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
+  const isOver = isMola && diffMin >= limit;
+
+  timerEl.textContent   = `${diffMin}dk ${diffSec}s`;
+  timerEl.style.color   = isOver ? 'var(--red)' : (isMola ? 'var(--yellow)' : 'var(--text-muted)');
+  timerEl.style.fontWeight = '700';
+}
+
+// ── GEÇMİŞ ───────────────────────────────────────────────────
 function loadHistory() {
   const saved = localStorage.getItem('actionHistory');
   if (!saved) return;
@@ -74,18 +178,13 @@ function loadHistory() {
     list.appendChild(item);
   });
 
-  // Son işleme göre status dot'u güncelle
   if (items.length > 0) {
-    const last   = items[0];
     const dotMap = {
-      'İşe Başladı':   'green',
-      'Çay Molası':    'yellow',
-      'Yemek Molası':  'yellow',
-      'Moladan Döndü': 'green',
-      'Mesaisi Bitti': 'red'
+      'İşe Başladı':'green','Çay Molası':'yellow',
+      'Yemek Molası':'yellow','Moladan Döndü':'green','Mesaisi Bitti':'red'
     };
     const dot = document.getElementById('statusDot');
-    if (dotMap[last.action]) dot.className = 'status-dot ' + dotMap[last.action];
+    if (dot && dotMap[items[0].action]) dot.className = 'status-dot ' + dotMap[items[0].action];
   }
 }
 
@@ -94,7 +193,7 @@ function addHistory(icon, name, action, time, overBreak = false, overBreakMsg = 
   const empty = list.querySelector('.empty-state');
   if (empty) empty.remove();
 
-  const warnText = overBreak ? ` — ⚠️ ${overBreakMsg || '15 dk aşıldı!'}` : '';
+  const warnText = overBreak ? ` — ⚠️ ${overBreakMsg || 'Süre aşıldı!'}` : '';
   const item = document.createElement('div');
   item.className = 'history-item' + (overBreak ? ' over-break' : '');
   item.innerHTML = `
@@ -107,7 +206,6 @@ function addHistory(icon, name, action, time, overBreak = false, overBreakMsg = 
   list.insertBefore(item, list.firstChild);
   while (list.children.length > 10) list.removeChild(list.lastChild);
 
-  // localStorage'a kaydet
   const saved   = localStorage.getItem('actionHistory');
   const history = saved ? JSON.parse(saved) : [];
   history.unshift({ icon, name, action, time, overBreak, overBreakMsg });
@@ -117,214 +215,143 @@ function addHistory(icon, name, action, time, overBreak = false, overBreakMsg = 
 
 // ── ANA EYLEMLER ─────────────────────────────────────────────
 async function sendAction(action, icon, dotColor) {
-  if (!currentEmployee) {
-    showToast('⚠️', 'Önce isminizi girin!', 'error');
-    return;
-  }
+  if (!currentEmployee) { showToast('⚠️','Önce isminizi girin!','error'); return; }
 
   const now       = new Date();
   const timestamp = now.toLocaleString('tr-TR', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
   });
 
-  // Mola aşımı tespiti: "Moladan Döndü" geliyorsa son mola kaydını bul
-  let overBreak    = false;
-  let overBreakMsg = '';
+  // Mola aşımı tespiti
+  let overBreak = false, overBreakMsg = '';
   if (action === 'Moladan Döndü') {
     const saved = localStorage.getItem('actionHistory');
     if (saved) {
-      const history   = JSON.parse(saved);
-      const lastBreak = history.find(h => h.action === 'Çay Molası' || h.action === 'Yemek Molası');
-      if (lastBreak) {
-        const [hh, mm] = lastBreak.time.split(':').map(Number);
-        const breakDate = new Date();
-        breakDate.setHours(hh, mm, 0, 0);
-        const diffMin = Math.floor((now - breakDate) / 60000);
-        const limit   = lastBreak.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
-        if (diffMin > limit) {
-          overBreak    = true;
-          overBreakMsg = `${limit} dk aşıldı! (${diffMin} dk)`;
-        }
+      const hist = JSON.parse(saved);
+      const lb   = hist.find(h => h.action === 'Çay Molası' || h.action === 'Yemek Molası');
+      if (lb) {
+        const [hh, mm] = lb.time.split(':').map(Number);
+        const bd = new Date(); bd.setHours(hh, mm, 0, 0);
+        const diffMin = Math.floor((now - bd) / 60000);
+        const limit   = lb.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
+        if (diffMin > limit) { overBreak = true; overBreakMsg = `${limit} dk aşıldı! (${diffMin} dk)`; }
       }
     }
   }
 
-  document.getElementById('statusDot').className = 'status-dot ' + dotColor;
-  showToast('', '', 'loading', true);
+  const dot = document.getElementById('statusDot');
+  if (dot) dot.className = 'status-dot ' + dotColor;
+  showToast('','','loading', true);
 
   try {
     await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST', mode:'no-cors',
+      headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ employee: currentEmployee, action, timestamp })
     });
-    addHistory(icon, currentEmployee, action,
-      now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-      overBreak, overBreakMsg);
+    const timeStr = now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+    addHistory(icon, currentEmployee, action, timeStr, overBreak, overBreakMsg);
     showToast('✅', `"${action}" kaydedildi!`, 'success');
   } catch (err) {
-    showToast('❌', 'Bağlantı hatası!', 'error');
-  }
-}
-
-// ── PATRON ŞİFRESİ ───────────────────────────────────────────
-function openPasswordModal() {
-  document.getElementById('passwordInput').value = '';
-  document.getElementById('passwordModal').classList.add('show');
-  setTimeout(() => document.getElementById('passwordInput').focus(), 200);
-}
-
-function closePasswordModal() {
-  document.getElementById('passwordModal').classList.remove('show');
-}
-
-function checkPassword() {
-  const val = document.getElementById('passwordInput').value;
-  if (val === PATRON_PASSWORD) {
-    closePasswordModal();
-    openPatronPanel();
-  } else {
-    shake(document.getElementById('passwordInput'));
-    document.getElementById('passwordInput').value = '';
-    showToast('❌', 'Hatalı şifre!', 'error');
+    showToast('❌','Bağlantı hatası!','error');
   }
 }
 
 // ── PATRON PANELİ ────────────────────────────────────────────
-function openPatronPanel() {
-  document.getElementById('mainApp').style.display    = 'none';
-  document.getElementById('setupScreen').style.display = 'none';
-  document.getElementById('patronPanel').style.display = 'block';
-  loadPatronData();
-  // Her 30 saniyede otomatik yenile
-  patronRefreshTimer = setInterval(loadPatronData, 30000);
-}
-
-function exitPatron() {
+function startPatronRefresh() {
   clearInterval(patronRefreshTimer);
-  document.getElementById('patronPanel').style.display = 'none';
-  init(); // tekrar isim kontrolü yap
+  patronRefreshTimer = setInterval(() => {
+    if (currentTab === 0) loadPatronData();
+  }, 30000);
 }
 
-async function loadPatronData() {
-  document.getElementById('refreshInfo').textContent = 'Veriler güncelleniyor...';
-  try {
-    await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'getAll' })
-    });
-    // no-cors'ta response okunamaz — JSONP yaklaşımı kullanılıyor
-    loadViaScript();
-  } catch (err) {
-    document.getElementById('refreshInfo').textContent = '⚠️ Veri alınamadı.';
-  }
+function loadPatronData() {
+  document.getElementById('refreshInfo').textContent = 'Güncelleniyor...';
+  loadViaScript();
 }
 
 function loadViaScript() {
-  const callbackName = 'gasCallback_' + Date.now();
-  const script       = document.createElement('script');
+  const cbName = 'gasCallback_' + Date.now();
+  const script = document.createElement('script');
 
-  window[callbackName] = function(data) {
-    document.getElementById('refreshInfo').textContent = '';
-    try {
-      renderWorkers(data);
-      const now = new Date();
-      document.getElementById('refreshInfo').textContent =
-        `Son güncelleme: ${now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · 30 sn'de bir yenilenir`;
-    } catch (e) {
-      document.getElementById('refreshInfo').textContent = '⚠️ Veri işlenemedi.';
-    }
-    delete window[callbackName];
-    script.remove();
+  window[cbName] = function(data) {
+    allWorkerRows = data;
+    renderWorkers(data);
+    const now = new Date();
+    document.getElementById('refreshInfo').textContent =
+      `Son güncelleme: ${now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · 30sn'de bir yenilenir`;
+    delete window[cbName]; script.remove();
   };
 
   script.onerror = function() {
-    document.getElementById('refreshInfo').textContent =
-      '⚠️ Veri alınamadı. GAS URL\'ini ve yayın ayarlarını kontrol edin.';
-    delete window[callbackName];
-    script.remove();
+    document.getElementById('refreshInfo').textContent = '⚠️ Veri alınamadı.';
+    delete window[cbName]; script.remove();
   };
 
-  script.src = GAS_URL + '?callback=' + callbackName;
+  script.src = GAS_URL + '?callback=' + cbName;
   document.head.appendChild(script);
 }
 
 function renderWorkers(rows) {
-  allWorkerRows = rows; // detay modalı için sakla
+  allWorkerRows = rows;
   const latest = {};
 
   rows.forEach(row => {
     const [rawName, action, ts] = row;
     if (!rawName || rawName === '—' || !action || action === '—') return;
-
-    // İsmi normalize et: trim + her kelimenin baş harfi büyük
-    const name = rawName.trim().split(' ')
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
-
-    const parsedTime = parseTS(ts);
-    if (!latest[name] || parsedTime > latest[name].time) {
-      latest[name] = { action, ts, time: parsedTime };
-    }
+    const name = normName(rawName);
+    const t    = parseTS(ts);
+    if (!latest[name] || t > latest[name].time) latest[name] = { action, ts, time: t };
   });
 
   const list = document.getElementById('workerList');
   list.innerHTML = '';
 
   if (Object.keys(latest).length === 0) {
-    list.innerHTML = '<div class="patron-empty">📭 Henüz kayıt yok</div>';
-    return;
+    list.innerHTML = '<div class="patron-empty">📭 Henüz kayıt yok</div>'; return;
   }
+
+  // Eski kart sayaçlarını temizle
+  Object.values(workerCardTimers).forEach(clearInterval);
+  workerCardTimers = {};
 
   let working = 0, onBreak = 0, overLimit = 0;
 
   const sorted = Object.entries(latest).sort((a, b) => {
-    const order = { 'Çay Molası': 0, 'Yemek Molası': 0, 'İşe Başladı': 1, 'Moladan Döndü': 1, 'Mesaisi Bitti': 2 };
-    return (order[a[1].action] ?? 1) - (order[b[1].action] ?? 1);
+    const o = {'Çay Molası':0,'Yemek Molası':0,'İşe Başladı':1,'Moladan Döndü':1,'Mesaisi Bitti':2};
+    return (o[a[1].action]??1) - (o[b[1].action]??1);
   });
 
   sorted.forEach(([name, data]) => {
     const { action, time } = data;
-    const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const isMola   = action === 'Çay Molası' || action === 'Yemek Molası';
+    const limit    = action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
     const diffMin  = Math.floor((Date.now() - time) / 60000);
 
-    let cardClass   = 'worker-card';
-    let statusText  = '';
-    let timerText   = '';
-    let alertBadge  = '';
+    let cardClass = 'worker-card', statusText = '', timerText = '', alertBadge = '';
 
     if (action === 'Çay Molası') {
       const over = diffMin > BREAK_LIMIT_MIN;
       cardClass  += over ? ' over-limit' : ' on-break';
-      statusText  = over
-        ? `🔴 Çay molasında — <b>${diffMin} dk</b>`
-        : `🟡 Çay molasında — ${diffMin} dk`;
-      timerText = diffMin + ' dk';
-      if (over) alertBadge = '<span class="alert-badge">AŞILDI</span>';
-      if (over) overLimit++; else onBreak++;
+      statusText  = over ? `🔴 Çay molasında — <b>${diffMin} dk</b>` : `🟡 Çay molasında — ${diffMin} dk`;
+      timerText   = diffMin + ' dk';
+      if (over) { alertBadge = '<span class="alert-badge">AŞILDI</span>'; overLimit++; } else onBreak++;
     } else if (action === 'Yemek Molası') {
       const over = diffMin > LUNCH_LIMIT_MIN;
       cardClass  += over ? ' over-limit' : ' on-break';
-      statusText  = over
-        ? `🔴 Yemek molasında — <b>${diffMin} dk</b>`
-        : `🍽️ Yemek molasında — ${diffMin} dk`;
-      timerText = diffMin + ' dk';
-      if (over) alertBadge = '<span class="alert-badge">AŞILDI</span>';
-      if (over) overLimit++; else onBreak++;
+      statusText  = over ? `🔴 Yemek molasında — <b>${diffMin} dk</b>` : `🍽️ Yemek molasında — ${diffMin} dk`;
+      timerText   = diffMin + ' dk';
+      if (over) { alertBadge = '<span class="alert-badge">AŞILDI</span>'; overLimit++; } else onBreak++;
     } else if (action === 'İşe Başladı' || action === 'Moladan Döndü') {
       cardClass  += ' working';
       statusText  = '🟢 Çalışıyor';
       working++;
     } else if (action === 'Mesaisi Bitti') {
-      cardClass  += ' off';
-      statusText  = '⚫ Mesai bitti';
+      cardClass  += ' off'; statusText = '⚫ Mesai bitti';
     } else {
-      cardClass  += ' off';
-      statusText  = action;
+      cardClass  += ' off'; statusText = action;
     }
 
     const card = document.createElement('div');
@@ -335,8 +362,24 @@ function renderWorkers(rows) {
         <div class="worker-name">${name}${alertBadge}</div>
         <div class="worker-status">${statusText}</div>
       </div>
-      ${timerText ? `<div class="worker-timer">${timerText}</div>` : ''}
+      ${isMola ? `<div class="worker-timer" id="wtimer-${initials}-${Date.now()}">${timerText}</div>` : ''}
     `;
+
+    // Canlı sayaç — molada olan kartlar için
+    if (isMola) {
+      const timerId  = `wtimer-${initials}-${Date.now()}`;
+      const timerDiv = card.querySelector('.worker-timer');
+      const lim      = action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
+      const interval = setInterval(() => {
+        if (!timerDiv.isConnected) { clearInterval(interval); return; }
+        const d = Math.floor((Date.now() - time) / 60000);
+        const s = Math.floor(((Date.now() - time) % 60000) / 1000);
+        timerDiv.textContent = `${d}dk ${s}s`;
+        if (d > lim) timerDiv.style.color = 'var(--red)';
+      }, 1000);
+      workerCardTimers[timerId] = interval;
+    }
+
     card.addEventListener('click', () => openWorkerDetail(name));
     list.appendChild(card);
   });
@@ -347,15 +390,11 @@ function renderWorkers(rows) {
 }
 
 // ── ÇALIŞAN DETAY MODALİ ─────────────────────────────────────
-
-// renderWorkers'dan gelen tüm ham satırları saklıyoruz
-let allWorkerRows = [];
-
 function openWorkerDetail(name) {
-  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('detailAvatar').textContent   = initials;
   document.getElementById('detailName').textContent     = name;
-  document.getElementById('detailSubtitle').textContent = 'Bugünkü hareketler yükleniyor...';
+  document.getElementById('detailSubtitle').textContent = 'Yükleniyor...';
   document.getElementById('detailTotalBreaks').textContent = '—';
   document.getElementById('detailOverBreaks').textContent  = '—';
   document.getElementById('detailTotalMoves').textContent  = '—';
@@ -363,110 +402,76 @@ function openWorkerDetail(name) {
   document.getElementById('detailTimeline').style.display  = 'none';
   document.getElementById('detailTimeline').innerHTML      = '';
   document.getElementById('detailOverlay').classList.add('show');
-
-  // Sheets'ten tüm veriyi yeniden çekip bu çalışanı filtrele
   loadWorkerDetailViaScript(name);
 }
 
 function closeDetailModal(event) {
-  // Overlay'e tıklandıysa kapat; panel içine tıklandıysa kapatma
   if (event && event.target !== document.getElementById('detailOverlay')) return;
   document.getElementById('detailOverlay').classList.remove('show');
 }
 
 function loadWorkerDetailViaScript(targetName) {
-  const callbackName = 'detailCallback_' + Date.now();
-  const script       = document.createElement('script');
+  const cbName = 'detailCallback_' + Date.now();
+  const script = document.createElement('script');
 
-  window[callbackName] = function(data) {
-    try {
-      renderWorkerDetail(targetName, data);
-    } catch (e) {
+  window[cbName] = function(data) {
+    try { renderWorkerDetail(targetName, data); }
+    catch(e) {
       document.getElementById('detailSubtitle').textContent = '⚠️ Veri işlenemedi.';
       document.getElementById('detailLoading').style.display = 'none';
     }
-    delete window[callbackName];
-    script.remove();
+    delete window[cbName]; script.remove();
   };
 
   script.onerror = function() {
     document.getElementById('detailSubtitle').textContent = '⚠️ Veri alınamadı.';
     document.getElementById('detailLoading').style.display = 'none';
-    delete window[callbackName];
-    script.remove();
+    delete window[cbName]; script.remove();
   };
 
-  script.src = GAS_URL + '?callback=' + callbackName;
+  // Log sayfasından çek (type=log parametresiyle)
+  script.src = GAS_URL + '?callback=' + cbName + '&type=log';
   document.head.appendChild(script);
 }
 
 function renderWorkerDetail(targetName, rows) {
-  // Bugünün başlangıcı
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-
-  // Bu çalışana ait, bugünkü tüm satırları topla
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
   const myRows = [];
+
   rows.forEach(row => {
     const [rawName, action, ts] = row;
     if (!rawName || rawName === '—' || !action || action === '—') return;
-
-    const name = rawName.trim().split(' ')
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
-
+    const name = normName(rawName);
     if (name !== targetName) return;
-
     const t = parseTS(ts);
-    if (t < todayStart) return; // bugün değil
-
-    myRows.push({ action, time: t, ts });
+    if (t < todayStart) return;
+    myRows.push({ action, time: t });
   });
 
-  // Zamana göre sırala (eskiden yeniye)
   myRows.sort((a, b) => a.time - b.time);
 
-  // İstatistikleri hesapla
-  let totalBreaks      = 0;
-  let overBreaks       = 0;
-  let pendingBreakTime = null;
-  let pendingBreakLimit = BREAK_LIMIT_MIN;
+  let totalBreaks = 0, overBreaks = 0, pendingTime = null, pendingLimit = BREAK_LIMIT_MIN;
 
-  // Her "mola çıkış" – "Moladan Döndü" / "Mesaisi Bitti" çiftini işle
   myRows.forEach(row => {
     if (row.action === 'Çay Molası' || row.action === 'Yemek Molası') {
-      pendingBreakTime  = row.time;
-      pendingBreakLimit = row.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
+      pendingTime = row.time;
+      pendingLimit = row.action === 'Yemek Molası' ? LUNCH_LIMIT_MIN : BREAK_LIMIT_MIN;
       totalBreaks++;
-    } else if ((row.action === 'Moladan Döndü' || row.action === 'Mesaisi Bitti') && pendingBreakTime) {
-      const diffMin = Math.floor((row.time - pendingBreakTime) / 60000);
-      if (diffMin > pendingBreakLimit) overBreaks++;
-      pendingBreakTime  = null;
-      pendingBreakLimit = BREAK_LIMIT_MIN;
+    } else if ((row.action === 'Moladan Döndü' || row.action === 'Mesaisi Bitti') && pendingTime) {
+      if (Math.floor((row.time - pendingTime)/60000) > pendingLimit) overBreaks++;
+      pendingTime = null; pendingLimit = BREAK_LIMIT_MIN;
     }
   });
 
-  // Hâlâ molada mı?
-  if (pendingBreakTime) {
-    const diffMin = Math.floor((Date.now() - pendingBreakTime) / 60000);
-    if (diffMin > pendingBreakLimit) overBreaks++;
-  }
+  if (pendingTime && Math.floor((Date.now() - pendingTime)/60000) > pendingLimit) overBreaks++;
 
-  // İstatistik kutularını doldur
   document.getElementById('detailTotalBreaks').textContent = totalBreaks;
   document.getElementById('detailOverBreaks').textContent  = overBreaks;
   document.getElementById('detailTotalMoves').textContent  = myRows.length;
+  document.getElementById('detailOverStatBox').className   = 'detail-stat ' + (overBreaks > 0 ? 'danger' : 'warn');
+  document.getElementById('detailSubtitle').textContent    =
+    myRows.length > 0 ? `Bugün ${myRows.length} hareket · ${totalBreaks} mola` : 'Bugün henüz kayıt yok';
 
-  // Aşım varsa kutuyu kırmızıya çevir
-  const overBox = document.getElementById('detailOverStatBox');
-  overBox.className = 'detail-stat ' + (overBreaks > 0 ? 'danger' : 'warn');
-
-  document.getElementById('detailSubtitle').textContent =
-    myRows.length > 0
-      ? `Bugün ${myRows.length} hareket · ${totalBreaks} mola`
-      : 'Bugün henüz kayıt yok';
-
-  // Timeline'ı oluştur
   const timeline = document.getElementById('detailTimeline');
   timeline.innerHTML = '';
 
@@ -477,45 +482,34 @@ function renderWorkerDetail(targetName, rows) {
     return;
   }
 
-  // Her satırı render et; molalarda süre hesapla
-  let lastBreakStart = null;
-  let lastBreakLimit = BREAK_LIMIT_MIN;
-  myRows.forEach((row, i) => {
-    const timeStr = row.time.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    let rowClass  = 'detail-row';
-    let icon      = '⚪';
-    let note      = '';
-    let noteClass = '';
+  let lastStart = null, lastLimit = BREAK_LIMIT_MIN;
+  myRows.forEach(row => {
+    const timeStr = row.time.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+    let rowClass = 'detail-row', icon = '⚪', note = '', noteClass = '';
 
     if (row.action === 'İşe Başladı') {
       rowClass += ' row-start'; icon = '🟢';
     } else if (row.action === 'Çay Molası') {
-      rowClass += ' row-break'; icon = '☕';
-      lastBreakStart = row.time;
-      lastBreakLimit = BREAK_LIMIT_MIN;
+      rowClass += ' row-break'; icon = '☕'; lastStart = row.time; lastLimit = BREAK_LIMIT_MIN;
     } else if (row.action === 'Yemek Molası') {
-      rowClass += ' row-break'; icon = '🍽️';
-      lastBreakStart = row.time;
-      lastBreakLimit = LUNCH_LIMIT_MIN;
+      rowClass += ' row-break'; icon = '🍽️'; lastStart = row.time; lastLimit = LUNCH_LIMIT_MIN;
     } else if (row.action === 'Moladan Döndü') {
-      if (lastBreakStart) {
-        const diffMin = Math.floor((row.time - lastBreakStart) / 60000);
-        const over    = diffMin > lastBreakLimit;
+      if (lastStart) {
+        const d = Math.floor((row.time - lastStart)/60000);
+        const over = d > lastLimit;
         rowClass += over ? ' row-over' : ' row-break-end';
-        icon      = over ? '🔴' : '🔵';
-        note      = `Mola süresi: ${diffMin} dk (limit: ${lastBreakLimit} dk)`;
+        icon = over ? '🔴' : '🔵';
+        note = `Mola süresi: ${d} dk (limit: ${lastLimit} dk)`;
         noteClass = over ? 'over' : '';
-        lastBreakStart = null;
-      } else {
-        rowClass += ' row-break-end'; icon = '🔵';
-      }
+        lastStart = null;
+      } else { rowClass += ' row-break-end'; icon = '🔵'; }
     } else if (row.action === 'Mesaisi Bitti') {
       rowClass += ' row-end'; icon = '🔴';
-      if (lastBreakStart) {
-        const diffMin = Math.floor((row.time - lastBreakStart) / 60000);
-        note = `Mola kapanmadan mesai bitti (${diffMin} dk)`;
-        noteClass = diffMin > lastBreakLimit ? 'over' : '';
-        lastBreakStart = null;
+      if (lastStart) {
+        const d = Math.floor((row.time - lastStart)/60000);
+        note = `Mola kapanmadan mesai bitti (${d} dk)`;
+        noteClass = d > lastLimit ? 'over' : '';
+        lastStart = null;
       }
     }
 
@@ -527,8 +521,7 @@ function renderWorkerDetail(targetName, rows) {
         <div class="detail-row-action">${row.action}</div>
         ${note ? `<div class="detail-row-note ${noteClass}">${note}</div>` : ''}
       </div>
-      <div class="detail-row-time">${timeStr}</div>
-    `;
+      <div class="detail-row-time">${timeStr}</div>`;
     timeline.appendChild(el);
   });
 
@@ -536,51 +529,30 @@ function renderWorkerDetail(targetName, rows) {
   timeline.style.display = 'flex';
 }
 
+// ── YARDIMCILAR ───────────────────────────────────────────────
+function normName(raw) {
+  return raw.trim().split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
 
-// Sheets'ten gelen tüm formatları destekler
 function parseTS(ts) {
   if (!ts) return new Date(0);
   if (ts instanceof Date) return ts;
-
   ts = String(ts).trim();
   if (!ts || ts === '—') return new Date(0);
-
-  // Format 1: "24.04.2026 21:09:07"
   const m1 = ts.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/);
-  if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1], +m1[4], +m1[5], +m1[6]);
-
-  // Format 2: "2026-04-24T21:09:07"
+  if (m1) return new Date(+m1[3],+m1[2]-1,+m1[1],+m1[4],+m1[5],+m1[6]);
   const m2 = ts.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
-  if (m2) return new Date(+m2[1], +m2[2]-1, +m2[3], +m2[4], +m2[5], +m2[6]);
-
-  // Format 3: "24.04.2026 21:09" (saniyesiz)
+  if (m2) return new Date(+m2[1],+m2[2]-1,+m2[3],+m2[4],+m2[5],+m2[6]);
   const m3 = ts.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})$/);
-  if (m3) return new Date(+m3[3], +m3[2]-1, +m3[1], +m3[4], +m3[5], 0);
-
-  // Fallback
+  if (m3) return new Date(+m3[3],+m3[2]-1,+m3[1],+m3[4],+m3[5],0);
   const d = new Date(ts);
   return isNaN(d) ? new Date(0) : d;
 }
 
-// ── YARDIMCI FONKSİYONLAR ─────────────────────────────────────
-function show(id) {
-  ['setupScreen', 'mainApp', 'patronPanel'].forEach(s => {
-    const el = document.getElementById(s);
-    if (el) el.style.display = 'none';
-  });
-  const target = document.getElementById(id);
-  if (target) target.style.display = id === 'setupScreen' ? 'flex' : 'block';
-}
-
-function isHidden(id) {
-  const el = document.getElementById(id);
-  return !el || el.style.display === 'none' || el.style.display === '';
-}
-
 function shake(el) {
-  el.classList.remove('shake');
-  void el.offsetWidth; // reflow tetikle
-  el.classList.add('shake');
+  el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
   el.style.borderColor = 'var(--red)';
   setTimeout(() => el.style.borderColor = '', 1500);
 }
@@ -591,7 +563,7 @@ function showToast(icon, msg, type, isLoading = false) {
   toast.className = 'toast ' + type;
   if (isLoading) {
     document.getElementById('toastIcon').innerHTML = '<div class="spinner"></div>';
-    document.getElementById('toastMsg').textContent  = 'Gönderiliyor...';
+    document.getElementById('toastMsg').textContent = 'Gönderiliyor...';
   } else {
     document.getElementById('toastIcon').textContent = icon;
     document.getElementById('toastMsg').textContent  = msg;
@@ -600,18 +572,11 @@ function showToast(icon, msg, type, isLoading = false) {
   if (!isLoading) toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// ── KLAVYE KISA YOLLARI ───────────────────────────────────────
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
-    if (!isHidden('setupScreen')) saveName();
-    if (!isHidden('passwordModal') &&
-        document.getElementById('passwordModal').classList.contains('show')) checkPassword();
-  }
-  if (e.key === 'Escape') {
-    document.getElementById('detailOverlay').classList.remove('show');
-    closePasswordModal();
-  }
+// ── KLAVYE ────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('setupScreen').style.display === 'flex') saveName();
+  if (e.key === 'Escape') document.getElementById('detailOverlay').classList.remove('show');
 });
 
-// ── UYGULAMAYI BAŞLAT ─────────────────────────────────────────
+// ── BAŞLAT ────────────────────────────────────────────────────
 init();

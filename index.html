@@ -9,135 +9,142 @@
 </head>
 <body>
 
-<div class="container">
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="badge">Canlı Sistem</div>
-    <h1>Uygun AVM<br><span>Takip</span></h1>
-    <div class="clock" id="clock">—</div>
-  </div>
-
-  <!-- SETUP SCREEN (ilk açılışta görünür) -->
-  <div id="setupScreen" class="setup-screen" style="display:none;">
-    <div class="setup-icon">👤</div>
-    <h2>Hoş geldiniz!</h2>
-    <p>Uygulamayı kullanmadan önce adınızı ve soyadınızı girin. Bu bilgi cihazınızda kaydedilir.</p>
-    <input class="name-input" id="nameInput" type="text" placeholder="Ad Soyad" maxlength="50" autocomplete="name" />
-    <button class="btn-save-name" onclick="saveName()">Kaydet ve Başla →</button>
-  </div>
-
-  <!-- MAIN APP (isim kaydedildikten sonra görünür) -->
-  <div id="mainApp" style="display:none; width:100%;">
-
-    <!-- ÇALIŞAN KARTI -->
-    <div class="card">
-      <div class="card-label">Aktif Çalışan</div>
-      <div class="status-bar">
-        <div class="status-dot green" id="statusDot"></div>
-        <div class="status-text"><strong id="employeeDisplay">—</strong></div>
-      </div>
-    </div>
-
-    <!-- AKSİYON BUTONLARI -->
-    <div class="card">
-      <div class="card-label">İşlem Seçimi</div>
-      <div class="divider"></div>
-      <div class="buttons-grid">
-        <button class="btn btn-start" onclick="sendAction('İşe Başladı', '💪🏼', 'green')">
-          <span class="btn-icon">💪🏼</span>
-          <span class="btn-label">İşe Başla</span>
-        </button>
-        <button class="btn btn-end" onclick="sendAction('Mesaisi Bitti', '😮‍💨', 'red')">
-          <span class="btn-icon">😮‍💨</span>
-          <span class="btn-label">Mesai Bitir</span>
-        </button>
-        <button class="btn btn-break-start" onclick="sendAction('Çay Molası', '☕', 'yellow')">
-          <span class="btn-icon">☕</span>
-          <span class="btn-label">Çay Molası</span>
-        </button>
-        <button class="btn btn-lunch" onclick="sendAction('Yemek Molası', '🍽️', 'yellow')">
-          <span class="btn-icon">🍽️</span>
-          <span class="btn-label">Yemek Molası</span>
-        </button>
-        <button class="btn btn-break-end btn-full" onclick="sendAction('Moladan Döndü', '🫠', 'green')">
-          <span class="btn-icon">🫠</span>
-          <span class="btn-label">Moladan Dön</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- SON İŞLEMLER -->
-    <div class="card">
-      <div class="card-label">Son İşlemler</div>
-      <div class="divider"></div>
-      <div class="history-list" id="historyList">
-        <div class="empty-state">Henüz kayıt yok</div>
-      </div>
-    </div>
-
-    <!-- PATRON GİRİŞ BUTONU -->
-    <button class="btn-patron-entry" onclick="openPasswordModal()">
-      🔐 Patron Görünümü
-    </button>
-
-  </div><!-- /mainApp -->
-
-  <!-- PATRON PANELİ -->
-  <div class="patron-panel" id="patronPanel">
-    <div class="patron-header">
-      <h2>👁️ Patron Paneli</h2>
-      <button class="btn-patron-exit" onclick="exitPatron()">← Çık</button>
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-box green">
-        <div class="s-num" id="countWorking">0</div>
-        <div class="s-label">Çalışıyor</div>
-      </div>
-      <div class="summary-box yellow">
-        <div class="s-num" id="countBreak">0</div>
-        <div class="s-label">Molada</div>
-      </div>
-      <div class="summary-box red">
-        <div class="s-num" id="countAlert">0</div>
-        <div class="s-label">Aşıldı</div>
-      </div>
-    </div>
-
-    <div class="refresh-info" id="refreshInfo">Yükleniyor...</div>
-    <div id="workerList"><div class="patron-empty">⏳ Veriler yükleniyor...</div></div>
-  </div>
-
-</div><!-- /container -->
-
-<!-- ŞİFRE MODALI -->
-<div class="modal-overlay" id="passwordModal">
-  <div class="modal">
-    <h3>🔐 Patron Girişi</h3>
-    <p>Devam etmek için şifreyi girin</p>
-    <input class="name-input" id="passwordInput" type="password" placeholder="••••••" maxlength="20" />
-    <div class="modal-btns">
-      <button class="btn-modal-cancel" onclick="closePasswordModal()">İptal</button>
-      <button class="btn-modal-ok" onclick="checkPassword()">Giriş →</button>
-    </div>
-  </div>
+<!-- ══════════════════════════════════════════════════════════
+     SETUP SCREEN
+═══════════════════════════════════════════════════════════ -->
+<div id="setupScreen" class="setup-screen" style="display:none;">
+  <div class="setup-icon">👤</div>
+  <h2>Hoş geldiniz!</h2>
+  <p>Adınızı ve soyadınızı girin. Bu bilgi cihazınızda kaydedilir.</p>
+  <input class="name-input" id="nameInput" type="text" placeholder="Ad Soyad" maxlength="50" autocomplete="name" />
+  <button class="btn-save-name" onclick="saveName()">Kaydet ve Başla →</button>
 </div>
 
-<!-- ÇALIŞAN DETAY MODALİ -->
+<!-- ══════════════════════════════════════════════════════════
+     MAIN APP (tab sistemi)
+═══════════════════════════════════════════════════════════ -->
+<div id="mainApp" style="display:none; width:100%;">
+
+  <!-- TAB BAR (üstte sabit) -->
+  <div class="tab-bar" id="tabBar">
+    <div class="tab-header">
+      <div class="tab-brand">
+        <div class="tab-brand-name">Uygun AVM <span>Takip</span></div>
+        <div class="clock-mini" id="clock">—</div>
+      </div>
+      <div class="tab-pills">
+        <button class="tab-pill active" id="tabBtnPatron"  onclick="switchTab(0)">
+          <span id="tabPatronLabel">👁️ Patron</span>
+        </button>
+        <button class="tab-pill"        id="tabBtnEmployee" onclick="switchTab(1)">
+          <span id="tabEmployeeLabel">👤 <span id="tabNameShort">—</span></span>
+        </button>
+      </div>
+    </div>
+    <!-- Kayar gösterge çizgisi -->
+    <div class="tab-indicator" id="tabIndicator"></div>
+  </div>
+
+  <!-- TAB İÇERİKLERİ (yatay kaydırma) -->
+  <div class="tab-viewport" id="tabViewport">
+
+    <!-- ── TAB 0: PATRON PANELİ ── -->
+    <div class="tab-pane" id="panePatron">
+
+      <!-- Özet sayaçlar -->
+      <div class="patron-summary">
+        <div class="summary-box green">
+          <div class="s-num" id="countWorking">0</div>
+          <div class="s-label">Çalışıyor</div>
+        </div>
+        <div class="summary-box yellow">
+          <div class="s-num" id="countBreak">0</div>
+          <div class="s-label">Molada</div>
+        </div>
+        <div class="summary-box red">
+          <div class="s-num" id="countAlert">0</div>
+          <div class="s-label">Aşıldı</div>
+        </div>
+      </div>
+
+      <div class="refresh-info" id="refreshInfo">Yükleniyor...</div>
+      <div id="workerList"><div class="patron-empty">⏳ Veriler yükleniyor...</div></div>
+
+    </div><!-- /panePatron -->
+
+    <!-- ── TAB 1: ÇALIŞAN PANELİ ── -->
+    <div class="tab-pane" id="paneEmployee">
+
+      <!-- Çalışan durum kartı + canlı sayaç -->
+      <div class="card">
+        <div class="card-label">Aktif Çalışan</div>
+        <div class="status-bar">
+          <div class="status-dot green" id="statusDot"></div>
+          <div class="status-text">
+            <strong id="employeeDisplay">—</strong>
+          </div>
+          <div class="worker-timer" id="liveTimer" style="margin-left:auto;"></div>
+        </div>
+      </div>
+
+      <!-- Aksiyon butonları -->
+      <div class="card">
+        <div class="card-label">İşlem Seçimi</div>
+        <div class="divider"></div>
+        <div class="buttons-grid">
+          <button class="btn btn-start" onclick="sendAction('İşe Başladı','🟢','green')">
+            <span class="btn-icon">🟢</span>
+            <span class="btn-label">İşe Başla</span>
+          </button>
+          <button class="btn btn-end" onclick="sendAction('Mesaisi Bitti','🔴','red')">
+            <span class="btn-icon">🔴</span>
+            <span class="btn-label">Mesai Bitir</span>
+          </button>
+          <button class="btn btn-break-start" onclick="sendAction('Çay Molası','☕','yellow')">
+            <span class="btn-icon">☕</span>
+            <span class="btn-label">Çay Molası</span>
+          </button>
+          <button class="btn btn-lunch" onclick="sendAction('Yemek Molası','🍽️','yellow')">
+            <span class="btn-icon">🍽️</span>
+            <span class="btn-label">Yemek Molası</span>
+          </button>
+          <button class="btn btn-break-end btn-full" onclick="sendAction('Moladan Döndü','🔵','green')">
+            <span class="btn-icon">🔵</span>
+            <span class="btn-label">Moladan Dön</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Son işlemler -->
+      <div class="card">
+        <div class="card-label">Son İşlemler</div>
+        <div class="divider"></div>
+        <div class="history-list" id="historyList">
+          <div class="empty-state">Henüz kayıt yok</div>
+        </div>
+      </div>
+
+    </div><!-- /paneEmployee -->
+
+  </div><!-- /tab-viewport -->
+</div><!-- /mainApp -->
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALLER
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Çalışan detay modalı -->
 <div class="detail-overlay" id="detailOverlay" onclick="closeDetailModal(event)">
   <div class="detail-panel" id="detailPanel">
     <div class="detail-handle"></div>
-
     <div class="detail-header">
       <div class="detail-avatar" id="detailAvatar">??</div>
       <div class="detail-title">
         <div class="detail-name" id="detailName">—</div>
-        <div class="detail-subtitle" id="detailSubtitle">Bugünkü hareketler yükleniyor...</div>
+        <div class="detail-subtitle" id="detailSubtitle">Yükleniyor...</div>
       </div>
-      <button class="btn-detail-close" onclick="closeDetailModal()">✕ Kapat</button>
+      <button class="btn-detail-close" onclick="closeDetailModal()">✕</button>
     </div>
-
     <div class="detail-stats">
       <div class="detail-stat">
         <div class="ds-num" id="detailTotalBreaks">—</div>
@@ -152,27 +159,22 @@
         <div class="ds-label">Toplam Hareket</div>
       </div>
     </div>
-
     <div class="detail-section-label">Bugünkü Hareketler</div>
-
     <div class="detail-loading" id="detailLoading">
       <div class="spinner"></div>
       <span>Veriler çekiliyor...</span>
     </div>
-
     <div class="detail-timeline" id="detailTimeline" style="display:none;"></div>
   </div>
 </div>
 
-<!-- TOAST BİLDİRİMİ -->
+<!-- Toast -->
 <div class="toast" id="toast">
   <span class="toast-icon" id="toastIcon"></span>
   <span id="toastMsg"></span>
 </div>
 
-<!-- SCRIPTS: önce config, sonra app -->
 <script src="config.js"></script>
 <script src="app.js"></script>
-
 </body>
 </html>
