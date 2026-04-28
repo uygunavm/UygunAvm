@@ -1,131 +1,128 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Uygun AVM Takip</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Uygun AVM Takip</title>
+<!-- Tüm CSS inline: style.css HTTP isteği tamamen kalktı -->
+<style>:root{--bg:#0f0f13;--surface:#18181f;--surface2:#21212b;--border:#2e2e3a;--text:#f0f0f5;--text-muted:#7a7a90;--green:#22d47a;--green-dim:#16a358;--yellow:#f5c542;--yellow-dim:#c49b20;--blue:#4da6ff;--blue-dim:#2a7fd4;--red:#ff5a5a;--red-dim:#cc3535;--radius:16px;--radius-sm:10px}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0;position:relative;overflow-x:hidden}body::before{content:'';position:fixed;top:-120px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(77,166,255,0.08) 0,transparent 70%);pointer-events:none;z-index:0}#mainApp{display:flex;flex-direction:column;height:100vh;width:100%;max-width:480px}.tab-bar{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px 0;flex-shrink:0}.tab-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.tab-brand-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text);letter-spacing:-0.3px;line-height:1.1}.tab-brand-name span{color:var(--blue)}.clock-mini{font-size:11px;color:var(--text-muted);font-weight:300;margin-top:1px}.tab-pills{display:flex;gap:4px;background:var(--surface2);border-radius:100px;padding:3px}.tab-pill{background:none;border:none;border-radius:100px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:6px 16px;cursor:pointer;transition:background 0.2s,color 0.2s;white-space:nowrap}.tab-pill.active{background:var(--blue);color:#001026;font-weight:600}.tab-indicator{height:2px;background:var(--blue);border-radius:2px;transition:transform 0.25s ease,width 0.25s ease;margin-top:0;display:none}.tab-viewport{display:flex;overflow-x:hidden;scroll-snap-type:x mandatory;flex:1;scroll-behavior:smooth}.tab-pane{min-width:100%;scroll-snap-align:start;overflow-y:auto;padding:16px 16px 40px}.patron-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}.live-timer{font-size:12px;color:var(--text-muted);font-weight:300;margin-left:8px;transition:color 0.3s}#setupScreen{min-height:100vh;width:100%;max-width:440px;padding:40px 24px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px}.card-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-weight:500;margin-bottom:10px}.select-wrapper{position:relative}.select-wrapper::after{content:'▾';position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;font-size:14px}select{width:100%;appearance:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;padding:16px 44px 16px 16px;cursor:pointer;outline:none;transition:border-color 0.2s}select:focus{border-color:var(--blue)}select option{background:var(--surface2)}.status-bar{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-top:14px}.status-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:background 0.3s}.status-dot.green{background:var(--green);box-shadow:0 0 8px var(--green)}.status-dot.yellow{background:var(--yellow);box-shadow:0 0 8px var(--yellow)}.status-dot.red{background:var(--red);box-shadow:0 0 8px var(--red)}.status-text{font-size:13px;color:var(--text-muted)}.status-text strong{color:var(--text);font-weight:500}.setup-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:20px}.setup-screen .setup-icon{font-size:56px;margin-bottom:4px}.setup-screen h2{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}.setup-screen p{font-size:14px;color:var(--text-muted);max-width:260px;line-height:1.5}.name-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:18px;font-weight:500;padding:18px 16px;outline:none;text-align:center;transition:border-color 0.2s}.name-input::placeholder{color:var(--text-muted)}.name-input:focus{border-color:var(--blue)}.btn-save-name{width:100%;background:linear-gradient(135deg,var(--blue),var(--blue-dim));color:#001026;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-size:16px;font-weight:700;padding:18px;cursor:pointer;transition:filter 0.15s,transform 0.12s;-webkit-tap-highlight-color:transparent}.btn-save-name:active{transform:scale(0.97);filter:brightness(0.9)}.btn-save-name:hover{filter:brightness(1.08)}.buttons-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:22px 16px;border:none;border-radius:var(--radius);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease,filter 0.12s ease;overflow:hidden;min-height:110px;-webkit-tap-highlight-color:transparent}.btn .btn-icon{font-size:28px;line-height:1}.btn .btn-label{font-size:13px;letter-spacing:0.2px;line-height:1.2;text-align:center}.btn::after{content:'';position:absolute;inset:0;background:white;opacity:0;border-radius:inherit;transition:opacity 0.15s}.btn:active::after{opacity:0.08}.btn:active{transform:scale(0.95);filter:brightness(0.9)}.btn:hover{filter:brightness(1.08)}.btn.sending,.btn:disabled{opacity:0.45;pointer-events:none;transform:none !important;filter:none !important;cursor:not-allowed}.btn-full{grid-column:1 / -1;min-height:80px;flex-direction:row;gap:12px}.btn-full .btn-icon{font-size:22px}.btn-full .btn-label{font-size:15px}.btn-start{background:linear-gradient(135deg,var(--green),var(--green-dim));color:#001a0d;box-shadow:0 4px 24px rgba(34,212,122,0.25)}.btn-break-start{background:linear-gradient(135deg,var(--yellow),var(--yellow-dim));color:#1a1200;box-shadow:0 4px 24px rgba(245,197,66,0.25)}.btn-lunch{background:linear-gradient(135deg,#ff9f43,#e08000);color:#1a0d00;box-shadow:0 4px 24px rgba(255,159,67,0.25)}.btn-break-end{background:linear-gradient(135deg,var(--blue),var(--blue-dim));color:#001026;box-shadow:0 4px 24px rgba(77,166,255,0.25)}.btn-end{background:linear-gradient(135deg,var(--red),var(--red-dim));color:#1a0000;box-shadow:0 4px 24px rgba(255,90,90,0.25)}.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:14px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;white-space:nowrap;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.35s;opacity:0;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.5)}.toast.show{transform:translateX(-50%) translateY(0);opacity:1}.toast.success{border-color:rgba(34,212,122,0.4)}.toast.error{border-color:rgba(255,90,90,0.4)}.toast.loading{border-color:rgba(77,166,255,0.4)}.toast-icon{font-size:18px}.history-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto}.history-list::-webkit-scrollbar{width:4px}.history-list::-webkit-scrollbar-track{background:transparent}.history-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}.history-item{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;animation:slideIn 0.3s ease}@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}.history-icon{font-size:16px}.history-info{flex:1;min-width:0}.history-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.history-action{font-size:11px;color:var(--text-muted);margin-top:1px}.history-time{font-size:11px;color:var(--text-muted);flex-shrink:0;font-weight:300}.empty-state{text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0}.divider{height:1px;background:var(--border);margin:6px 0 16px}.spinner{width:16px;height:16px;border:2px solid rgba(77,166,255,0.3);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.btn-change-name{background:none;border:1px solid var(--border);border-radius:100px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 14px;cursor:pointer;transition:border-color 0.2s,color 0.2s;margin-top:4px}.btn-change-name:hover{border-color:var(--blue);color:var(--blue)}.btn-patron-entry{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;padding:14px;cursor:pointer;transition:border-color 0.2s,color 0.2s,background 0.2s;margin-top:8px}.btn-patron-entry:hover{border-color:var(--blue);color:var(--blue);background:rgba(77,166,255,0.05)}.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:1000;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.2s;will-change:opacity}.modal-overlay.show{opacity:1;pointer-events:all}.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:340px;text-align:center;transform:translateY(20px);transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1)}.modal-overlay.show .modal{transform:translateY(0)}.modal h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px}.modal p{font-size:13px;color:var(--text-muted);margin-bottom:20px}.modal .name-input{margin-bottom:12px;letter-spacing:4px;font-size:22px}.modal-btns{display:flex;gap:10px}.btn-modal-cancel{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:14px;padding:14px;cursor:pointer;transition:border-color 0.2s}.btn-modal-cancel:hover{border-color:var(--border);color:var(--text)}.btn-modal-ok{flex:2;background:linear-gradient(135deg,var(--blue),var(--blue-dim));border:none;border-radius:var(--radius-sm);color:#001026;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;padding:14px;cursor:pointer;transition:filter 0.15s}.btn-modal-ok:hover{filter:brightness(1.1)}.shake{animation:shake 0.4s ease}@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}.patron-panel{width:100%}.refresh-info{font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px}.worker-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:border-color 0.3s}.worker-card.on-break{border-color:rgba(245,197,66,0.4)}.worker-card.over-limit{border-color:rgba(255,90,90,0.5);background:rgba(255,90,90,0.04)}.worker-card.working{border-color:rgba(34,212,122,0.3)}.worker-card.off{border-color:var(--border);opacity:0.6}.worker-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;flex-shrink:0;background:var(--surface2);color:var(--text-muted)}.worker-card.working .worker-avatar{background:rgba(34,212,122,0.15);color:var(--green)}.worker-card.on-break .worker-avatar{background:rgba(245,197,66,0.15);color:var(--yellow)}.worker-card.over-limit .worker-avatar{background:rgba(255,90,90,0.15);color:var(--red)}.worker-info{flex:1;min-width:0}.worker-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.worker-status{font-size:12px;color:var(--text-muted);margin-top:2px}.worker-card.working .worker-status{color:var(--green)}.worker-card.on-break .worker-status{color:var(--yellow)}.worker-card.over-limit .worker-status{color:var(--red)}.worker-timer{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;flex-shrink:0;color:var(--text-muted)}.worker-card.on-break .worker-timer{color:var(--yellow)}.worker-card.over-limit .worker-timer{color:var(--red)}.alert-badge{background:var(--red);color:white;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;margin-left:6px;animation:blink 1s infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}.patron-empty{text-align:center;color:var(--text-muted);font-size:13px;padding:40px 0}.summary-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}.summary-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 10px;text-align:center}.summary-box .s-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:800}.summary-box .s-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}.summary-box.green .s-num{color:var(--green)}.summary-box.yellow .s-num{color:var(--yellow)}.summary-box.red .s-num{color:var(--red)}.worker-card{cursor:pointer}.worker-card:hover{filter:brightness(1.06);transform:translateY(-1px);transition:border-color 0.3s,filter 0.15s,transform 0.15s}.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:flex-end;justify-content:center;z-index:1100;padding:0;opacity:0;pointer-events:none;transition:opacity 0.25s;will-change:opacity}.detail-overlay.show{opacity:1;pointer-events:all}.detail-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:28px 24px 40px;transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.34,1.56,0.64,1);will-change:transform}.detail-overlay.show .detail-panel{transform:translateY(0)}.detail-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 22px}.detail-header{display:flex;align-items:center;gap:14px;margin-bottom:24px}.detail-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;flex-shrink:0;background:rgba(77,166,255,0.15);color:var(--blue)}.detail-title{flex:1}.detail-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text)}.detail-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px}.btn-detail-close{background:none;border:1px solid var(--border);border-radius:100px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 14px;cursor:pointer;transition:border-color 0.2s,color 0.2s;flex-shrink:0}.btn-detail-close:hover{border-color:var(--red);color:var(--red)}.detail-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:22px}.detail-stat{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 10px;text-align:center}.detail-stat .ds-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)}.detail-stat.warn .ds-num{color:var(--yellow)}.detail-stat.danger .ds-num{color:var(--red)}.detail-stat .ds-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px;line-height:1.3}.detail-section-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-weight:500;margin-bottom:12px}.detail-timeline{display:flex;flex-direction:column;gap:6px}.detail-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:var(--radius-sm);padding:11px 14px;border-left:3px solid transparent}.detail-row.row-start{border-left-color:var(--green)}.detail-row.row-break{border-left-color:var(--yellow)}.detail-row.row-break-end{border-left-color:var(--blue)}.detail-row.row-end{border-left-color:var(--red)}.detail-row.row-over{border-left-color:var(--red);background:rgba(255,90,90,0.07)}.detail-row-icon{font-size:15px;flex-shrink:0}.detail-row-info{flex:1;min-width:0}.detail-row-action{font-size:13px;font-weight:500;color:var(--text)}.detail-row-note{font-size:11px;color:var(--text-muted);margin-top:1px}.detail-row-note.over{color:var(--red)}.detail-row-time{font-size:12px;color:var(--text-muted);flex-shrink:0;font-weight:300}.detail-loading{text-align:center;padding:40px 0;color:var(--text-muted);font-size:14px;display:flex;flex-direction:column;align-items:center;gap:14px}.history-live-timer{display:inline-flex;align-items:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--yellow);background:rgba(245,197,66,0.12);border-radius:100px;padding:1px 7px;margin-left:6px;transition:color 0.3s}.history-item.over-break{background:rgba(255,90,90,0.12);border:1px solid rgba(255,90,90,0.3)}.history-item.over-break .history-action{color:var(--red)}.history-item.over-break .history-name{color:var(--text)}@media (max-width:360px){.btn{min-height:96px;padding:18px 12px}.btn .btn-icon{font-size:24px}.btn .btn-label{font-size:12px}}
 
-  <!-- ✅ OPT-1: Kritik CSS inline — ilk boyama için dış dosya beklenmez -->
-  <style>
-    :root{--bg:#0f0f13;--surface:#18181f;--surface2:#21212b;--border:#2e2e3a;--text:#f0f0f5;--text-muted:#7a7a90;--blue:#4da6ff;--radius:16px;--radius-sm:10px;}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
-    /* İskelet — JS yüklenene kadar kullanıcı beyaz ekran görmez */
-    #appShell{width:100%;max-width:480px;padding:24px 16px;display:flex;flex-direction:column;gap:16px;}
-    .skel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
-    .skel-bar{height:14px;background:var(--surface2);border-radius:6px;margin-bottom:10px;animation:skPulse 1.4s ease infinite;}
-    .skel-bar.short{width:55%;}.skel-bar.tall{height:80px;}
-    @keyframes skPulse{0%,100%{opacity:.6}50%{opacity:1}}
-    #setupScreen{min-height:100vh;width:100%;max-width:440px;padding:40px 24px;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px;}
-    #mainApp{display:none;width:100%;}
-  </style>
-
-  <!-- ✅ OPT-2: Font non-blocking -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" media="print" onload="this.media='all'">
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
-
-  <!-- ✅ OPT-3: style.css preload — tarayıcı erkenden keşfeder -->
-  <link rel="preload" href="style.css" as="style" onload="this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="style.css"></noscript>
+/* İskelet — JS gelmeden önce boş ekranı önler */
+#appShell{width:100%;max-width:480px;padding:24px 16px;display:flex;flex-direction:column;gap:16px}
+.skel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.skel-bar{height:14px;background:var(--surface2);border-radius:6px;margin-bottom:10px;animation:skPulse 1.4s ease infinite}
+.skel-bar.short{width:55%}.skel-bar.tall{height:80px}
+@keyframes skPulse{0%,100%{opacity:.6}50%{opacity:1}}
+#setupScreen{min-height:100vh;width:100%;max-width:440px;padding:40px 24px;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px}
+#mainApp{display:none;width:100%}
+</style>
+<!-- Fontlar: preconnect + swap, non-blocking -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 </head>
 <body>
-
-<!-- ✅ OPT-4: Yükleme iskeleti -->
+<!-- Yükleme iskeleti -->
 <div id="appShell">
-  <div class="skel"><div class="skel-bar short"></div><div class="skel-bar tall"></div></div>
-  <div class="skel"><div class="skel-bar"></div><div class="skel-bar short"></div></div>
+<div class="skel"><div class="skel-bar short"></div><div class="skel-bar tall"></div></div>
+<div class="skel"><div class="skel-bar"></div><div class="skel-bar short"></div></div>
 </div>
 
 <div id="setupScreen">
-  <div class="setup-icon">👤</div>
-  <h2>Hoş geldiniz!</h2>
-  <p>Adınızı ve soyadınızı girin. Bu bilgi cihazınızda kaydedilir.</p>
-  <input class="name-input" id="nameInput" type="text" placeholder="Ad Soyad" maxlength="50" autocomplete="name" />
-  <button class="btn-save-name" onclick="saveName()">Kaydet ve Başla →</button>
+<div class="setup-icon">👤</div>
+<h2>Hoş geldiniz!</h2>
+<p>Adınızı ve soyadınızı girin. Bu bilgi cihazınızda kaydedilir.</p>
+<input class="name-input" id="nameInput" type="text" placeholder="Ad Soyad" maxlength="50" autocomplete="name">
+<button class="btn-save-name" onclick="saveName()">Kaydet ve Başla →</button>
 </div>
 
 <div id="mainApp">
-  <div class="tab-bar" id="tabBar">
-    <div class="tab-header">
-      <div class="tab-brand">
-        <div class="tab-brand-name">Uygun AVM <span>Takip</span></div>
-        <div class="clock-mini" id="clock">—</div>
-      </div>
-      <div class="tab-pills">
-        <button class="tab-pill active" id="tabBtnPatron"  onclick="switchTab(0)"><span id="tabPatronLabel">👁️ Patron</span></button>
-        <button class="tab-pill"        id="tabBtnEmployee" onclick="switchTab(1)"><span id="tabEmployeeLabel">👤 <span id="tabNameShort">—</span></span></button>
-      </div>
-    </div>
-    <div class="tab-indicator" id="tabIndicator"></div>
-  </div>
+<div class="tab-bar" id="tabBar">
+<div class="tab-header">
+<div class="tab-brand">
+<div class="tab-brand-name">Uygun AVM <span>Takip</span></div>
+<div class="clock-mini" id="clock">—</div>
+</div>
+<div class="tab-pills">
+<button class="tab-pill active" id="tabBtnPatron" onclick="switchTab(0)"><span id="tabPatronLabel">👁️ Patron</span></button>
+<button class="tab-pill" id="tabBtnEmployee" onclick="switchTab(1)"><span id="tabEmployeeLabel">👤 <span id="tabNameShort">—</span></span></button>
+</div>
+</div>
+<div class="tab-indicator" id="tabIndicator"></div>
+</div>
 
-  <div class="tab-viewport" id="tabViewport">
-    <div class="tab-pane" id="panePatron">
-      <div class="patron-summary">
-        <div class="summary-box green"><div class="s-num" id="countWorking">0</div><div class="s-label">Çalışıyor</div></div>
-        <div class="summary-box yellow"><div class="s-num" id="countBreak">0</div><div class="s-label">Molada</div></div>
-        <div class="summary-box red"><div class="s-num" id="countAlert">0</div><div class="s-label">Aşıldı</div></div>
-      </div>
-      <div class="refresh-info" id="refreshInfo">Yükleniyor...</div>
-      <div id="workerList"><div class="patron-empty">⏳ Veriler yükleniyor...</div></div>
-    </div>
+<div class="tab-viewport" id="tabViewport">
+<div class="tab-pane" id="panePatron">
+<div class="patron-summary">
+<div class="summary-box green"><div class="s-num" id="countWorking">0</div><div class="s-label">Çalışıyor</div></div>
+<div class="summary-box yellow"><div class="s-num" id="countBreak">0</div><div class="s-label">Molada</div></div>
+<div class="summary-box red"><div class="s-num" id="countAlert">0</div><div class="s-label">Aşıldı</div></div>
+</div>
+<div class="refresh-info" id="refreshInfo">Yükleniyor...</div>
+<div id="workerList"><div class="patron-empty">⏳ Veriler yükleniyor...</div></div>
+</div>
 
-    <div class="tab-pane" id="paneEmployee">
-      <div class="card">
-        <div class="card-label">Aktif Çalışan</div>
-        <div class="status-bar">
-          <div class="status-dot green" id="statusDot"></div>
-          <div class="status-text"><strong id="employeeDisplay">—</strong></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-label">İşlem Seçimi</div>
-        <div class="divider"></div>
-        <div class="buttons-grid">
-          <button class="btn btn-start"       onclick="sendAction('İşe Başladı','💪🏼','green')"><span class="btn-icon">💪🏼</span><span class="btn-label">İşe Başla</span></button>
-          <button class="btn btn-end"         onclick="sendAction('Mesaisi Bitti','😮‍💨','red')"><span class="btn-icon">😮‍💨</span><span class="btn-label">Mesai Bitir</span></button>
-          <button class="btn btn-break-start" onclick="sendAction('Çay Molası','☕','yellow')"><span class="btn-icon">☕</span><span class="btn-label">Çay Molası</span></button>
-          <button class="btn btn-lunch"       onclick="sendAction('Yemek Molası','🍽️','yellow')"><span class="btn-icon">🍽️</span><span class="btn-label">Yemek Molası</span></button>
-          <button class="btn btn-break-end btn-full" onclick="sendAction('Moladan Döndü','🫠','green')"><span class="btn-icon">🫠</span><span class="btn-label">Moladan Dön</span></button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-label">Son İşlemler</div>
-        <div class="divider"></div>
-        <div class="history-list" id="historyList"><div class="empty-state">Henüz kayıt yok</div></div>
-      </div>
-    </div>
-  </div>
+<div class="tab-pane" id="paneEmployee">
+<div class="card">
+<div class="card-label">Aktif Çalışan</div>
+<div class="status-bar">
+<div class="status-dot green" id="statusDot"></div>
+<div class="status-text"><strong id="employeeDisplay">—</strong></div>
+</div>
+</div>
+<div class="card">
+<div class="card-label">İşlem Seçimi</div>
+<div class="divider"></div>
+<div class="buttons-grid">
+<button class="btn btn-start" onclick="sendAction('İşe Başladı','💪🏼','green')"><span class="btn-icon">💪🏼</span><span class="btn-label">İşe Başla</span></button>
+<button class="btn btn-end" onclick="sendAction('Mesaisi Bitti','😮‍💨','red')"><span class="btn-icon">😮‍💨</span><span class="btn-label">Mesai Bitir</span></button>
+<button class="btn btn-break-start" onclick="sendAction('Çay Molası','☕','yellow')"><span class="btn-icon">☕</span><span class="btn-label">Çay Molası</span></button>
+<button class="btn btn-lunch" onclick="sendAction('Yemek Molası','🍽️','yellow')"><span class="btn-icon">🍽️</span><span class="btn-label">Yemek Molası</span></button>
+<button class="btn btn-break-end btn-full" onclick="sendAction('Moladan Döndü','🫠','green')"><span class="btn-icon">🫠</span><span class="btn-label">Moladan Dön</span></button>
+</div>
+</div>
+<div class="card">
+<div class="card-label">Son İşlemler</div>
+<div class="divider"></div>
+<div class="history-list" id="historyList"><div class="empty-state">Henüz kayıt yok</div></div>
+</div>
+</div>
+</div>
 </div>
 
 <div class="detail-overlay" id="detailOverlay" onclick="closeDetailModal(event)">
-  <div class="detail-panel" id="detailPanel">
-    <div class="detail-handle"></div>
-    <div class="detail-header">
-      <div class="detail-avatar" id="detailAvatar">??</div>
-      <div class="detail-title">
-        <div class="detail-name" id="detailName">—</div>
-        <div class="detail-subtitle" id="detailSubtitle">Yükleniyor...</div>
-      </div>
-      <button class="btn-detail-close" onclick="closeDetailModal()">✕</button>
-    </div>
-    <div class="detail-stats">
-      <div class="detail-stat"><div class="ds-num" id="detailTotalBreaks">—</div><div class="ds-label">Toplam Mola</div></div>
-      <div class="detail-stat warn" id="detailOverStatBox"><div class="ds-num" id="detailOverBreaks">—</div><div class="ds-label">Süre Aşımı</div></div>
-      <div class="detail-stat"><div class="ds-num" id="detailTotalMoves">—</div><div class="ds-label">Toplam Hareket</div></div>
-    </div>
-    <div class="detail-section-label">Bugünkü Hareketler</div>
-    <div class="detail-loading" id="detailLoading"><div class="spinner"></div><span>Veriler çekiliyor...</span></div>
-    <div class="detail-timeline" id="detailTimeline" style="display:none;"></div>
-  </div>
+<div class="detail-panel" id="detailPanel">
+<div class="detail-handle"></div>
+<div class="detail-header">
+<div class="detail-avatar" id="detailAvatar">??</div>
+<div class="detail-title">
+<div class="detail-name" id="detailName">—</div>
+<div class="detail-subtitle" id="detailSubtitle">Yükleniyor...</div>
+</div>
+<button class="btn-detail-close" onclick="closeDetailModal()">✕</button>
+</div>
+<div class="detail-stats">
+<div class="detail-stat"><div class="ds-num" id="detailTotalBreaks">—</div><div class="ds-label">Toplam Mola</div></div>
+<div class="detail-stat warn" id="detailOverStatBox"><div class="ds-num" id="detailOverBreaks">—</div><div class="ds-label">Süre Aşımı</div></div>
+<div class="detail-stat"><div class="ds-num" id="detailTotalMoves">—</div><div class="ds-label">Toplam Hareket</div></div>
+</div>
+<div class="detail-section-label">Bugünkü Hareketler</div>
+<div class="detail-loading" id="detailLoading"><div class="spinner"></div><span>Veriler çekiliyor...</span></div>
+<div class="detail-timeline" id="detailTimeline" style="display:none"></div>
+</div>
 </div>
 
 <div class="toast" id="toast"><span class="toast-icon" id="toastIcon"></span><span id="toastMsg"></span></div>
 
-<!-- ✅ OPT-5: defer — HTML parse'ını bloklamaz, çok daha hızlı görünür -->
-<script src="config.js" defer></script>
+<!-- config inline (288 byte) — HTTP isteği yok -->
+<script>const GAS_URL = 'https://script.google.com/macros/s/AKfycbxMHRXMKqEbjExXxDHTsbRPR1HE13ovd4ToiTIVENeJD8uUTH0W7jT4MVYRn4TRjGpQ1Q/exec';
+
+const PATRON_NAMES = ['Cansın Tiryaki', 'Timur Tiryaki'];
+
+const BREAK_LIMIT_MIN = 15;   // Çay molası
+const LUNCH_LIMIT_MIN = 30;   // Yemek molası
+</script>
+<!-- app.js defer — HTML parse'ını bloklamaz, cache'lenebilir -->
 <script src="app.js" defer></script>
 </body>
 </html>
