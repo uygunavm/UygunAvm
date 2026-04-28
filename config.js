@@ -12,5 +12,5 @@ const PATRON_NAMES = ['Cansın Tiryaki', 'Timur Tiryaki'];
 // ============================================================
 // ⏱️ MOLA LİMİTLERİ (dakika)
 // ============================================================
-const BREAK_LIMIT_MIN = 16;   // Çay molası
+const BREAK_LIMIT_MIN = 15;   // Çay molası
 const LUNCH_LIMIT_MIN = 30;   // Yemek molası
