@@ -28,8 +28,7 @@ function updateClock() {
     now.toLocaleDateString('tr-TR', { weekday:'short', month:'short', day:'numeric' })
     + ' ' + now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
 }
-updateClock();
-setInterval(updateClock, 1000);
+// updateClock ilk çağrısı init() içinde yapılıyor — DOM hazır olduktan sonra
 
 // ── PATRON ALGILAMA ───────────────────────────────────────────
 function checkIsPatron(name) {
@@ -39,6 +38,14 @@ function checkIsPatron(name) {
 
 // ── INIT ─────────────────────────────────────────────────────
 function init() {
+  // ✅ İskeleti gizle — artık gerçek içerik gösterilecek
+  const shell = document.getElementById('appShell');
+  if (shell) shell.style.display = 'none';
+
+  // Saati başlat
+  updateClock();
+  setInterval(updateClock, 1000);
+
   const saved = localStorage.getItem('employeeName');
   if (saved && saved.trim()) {
     currentEmployee = saved.trim();
@@ -113,8 +120,8 @@ function switchTab(index, instant = false) {
   if (index === 0 && isPatron) loadPatronData();
 }
 
-// Swipe desteği
-document.addEventListener('DOMContentLoaded', () => {
+// Swipe desteği — defer ile script çalıştığında DOM zaten hazır
+(function initSwipe() {
   const vp = document.getElementById('tabViewport');
   if (!vp) return;
   vp.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
@@ -122,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const diff = touchStartX - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 50) switchTab(diff > 0 ? 1 : 0);
   });
-});
+})();
 
 // ── CANLI SAYAÇ (çalışan ekranı) ─────────────────────────────
 function startLiveTimer() {
