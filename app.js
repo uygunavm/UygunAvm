@@ -1,6 +1,11 @@
 /* ============================================================
    UYGUN AVM TAKİP — app.js
    Bağımlılık: config.js
+   ============================================================
+   OPTİMİZASYONLAR:
+     1. Patron refresh: 30sn → 60sn (GAS cold start yükü azaltıldı)
+     2. Detay modalı: tüm log yerine sadece ilgili çalışanı çek
+        (type=log&name=... parametresiyle sunucu tarafında filtre)
    ============================================================ */
 
 // ── GLOBALS ──────────────────────────────────────────────────
@@ -328,9 +333,12 @@ async function sendAction(action, icon, dotColor) {
 // ── PATRON PANELİ ────────────────────────────────────────────
 function startPatronRefresh() {
   clearInterval(patronRefreshTimer);
+  // ✅ OPTİMİZASYON 2: 30sn → 60sn
+  // GAS cold start yükü yarıya indi. GAS tarafındaki cache süresi de
+  // 55sn'ye çıkarıldığı için çoğu istek Sheets'e gitmeden cache'den döner.
   patronRefreshTimer = setInterval(() => {
     if (currentTab === 0) loadPatronData();
-  }, 30000);
+  }, 60000);
 }
 
 function loadPatronData() {
@@ -347,7 +355,7 @@ function loadViaScript() {
     renderWorkers(data);
     const now = new Date();
     document.getElementById('refreshInfo').textContent =
-      `Son güncelleme: ${now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · 30sn'de bir yenilenir`;
+      `Son güncelleme: ${now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · 60sn'de bir yenilenir`;
     delete window[cbName]; script.remove();
   };
 
@@ -496,8 +504,11 @@ function loadWorkerDetailViaScript(targetName) {
     delete window[cbName]; script.remove();
   };
 
-  // Log sayfasından çek (type=log parametresiyle)
-  script.src = GAS_URL + '?callback=' + cbName + '&type=log';
+  // ✅ OPTİMİZASYON 3: Tüm log yerine sadece bu çalışanın kayıtlarını çek
+  // Önce: type=log → tüm çalışanların tüm geçmişi → JS'de filtre
+  // Sonra: type=log&name=... → GAS sunucu tarafında filtreler → sadece bu kişinin verisi gelir
+  // Çalışan sayısı arttıkça bu fark katlanarak büyür.
+  script.src = GAS_URL + '?callback=' + cbName + '&type=log&name=' + encodeURIComponent(targetName);
   document.head.appendChild(script);
 }
 
@@ -509,6 +520,7 @@ function renderWorkerDetail(targetName, rows) {
     const [rawName, action, ts] = row;
     if (!rawName || rawName === '—' || !action || action === '—') return;
     const name = normName(rawName);
+    // GAS zaten filtreliyor ama güvenlik için client tarafında da kontrol
     if (name !== targetName) return;
     const t = parseTS(ts);
     if (t < todayStart) return;
