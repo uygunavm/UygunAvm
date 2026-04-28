@@ -4,7 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Uygun AVM Takip</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- ✅ OPTİMİZASYON 1: Font preconnect + non-blocking yükleme
+       Önce: render-blocking, sayfa font gelene kadar beklerdi (~1-2sn)
+       Sonra: içerik hemen görünür, font arka planda yüklenir -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        media="print"
+        onload="this.media='all'">
+  <!-- JS kapalıysa fallback -->
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  </noscript>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -91,12 +105,12 @@
         <div class="card-label">İşlem Seçimi</div>
         <div class="divider"></div>
         <div class="buttons-grid">
-          <button class="btn btn-start" onclick="sendAction('İşe Başladı','🟢','green')">
-            <span class="btn-icon">🟢</span>
+          <button class="btn btn-start" onclick="sendAction('İşe Başladı','💪🏼','green')">
+            <span class="btn-icon">💪🏼</span>
             <span class="btn-label">İşe Başla</span>
           </button>
-          <button class="btn btn-end" onclick="sendAction('Mesaisi Bitti','🔴','red')">
-            <span class="btn-icon">🔴</span>
+          <button class="btn btn-end" onclick="sendAction('Mesaisi Bitti','😮‍💨','red')">
+            <span class="btn-icon">😮‍💨</span>
             <span class="btn-label">Mesai Bitir</span>
           </button>
           <button class="btn btn-break-start" onclick="sendAction('Çay Molası','☕','yellow')">
@@ -107,8 +121,8 @@
             <span class="btn-icon">🍽️</span>
             <span class="btn-label">Yemek Molası</span>
           </button>
-          <button class="btn btn-break-end btn-full" onclick="sendAction('Moladan Döndü','🔵','green')">
-            <span class="btn-icon">🔵</span>
+          <button class="btn btn-break-end btn-full" onclick="sendAction('Moladan Döndü','🫠','green')">
+            <span class="btn-icon">🫠</span>
             <span class="btn-label">Moladan Dön</span>
           </button>
         </div>
